@@ -1,0 +1,44 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/andre/OneDrive/Desktop/bachelor-testcases/bachelor-thesis/SA__FVSP_NNS.cpp
+SA__FVSP_NNS.h
+C:/Users/andre/OneDrive/Desktop/bachelor-testcases/bachelor-thesis/SA__FVSP_NNS.h
+
+C:/Users/andre/OneDrive/Desktop/bachelor-testcases/bachelor-thesis/SA__FVSP_NNS.h
+utility
+-
+vector
+-
+iostream
+-
+fstream
+-
+map
+-
+set
+-
+cmath
+-
+algorithm
+-
+chrono
+-
+
+C:/Users/andre/OneDrive/Desktop/bachelor-testcases/bachelor-thesis/main.cpp
+SA__FVSP_NNS.h
+C:/Users/andre/OneDrive/Desktop/bachelor-testcases/bachelor-thesis/SA__FVSP_NNS.h
+iostream
+-
+fstream
+-
+vector
+-
+chrono
+-
+
