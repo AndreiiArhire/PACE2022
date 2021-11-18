@@ -9,14 +9,16 @@ const int NR_SECONDS = 600-3;
 const int testcases = 20;
 
 signed main() {
-    for (int t = 1; t <= 1; ++t) {
+
+    srand(0);
+    for (int t = 1; t <= 20; ++t) {
         cout << "test " << t << " began\n";
         string path_in =
-                "C:\\Users\\andre\\OneDrive\\Desktop\\bachelor-testcases\\correct-testcases\\grader_test" +
+                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\correct-testcases\\grader_test" +
                 to_string(t) +
                 ".in";
         string path_out =
-                "C:\\Users\\andre\\OneDrive\\Desktop\\bachelor-testcases\\SA-DFVSP-NNS-results\\grader_test" +
+                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\SA-DFVSP-results\\grader_test" +
                 to_string(t) +
                 ".out";
         ifstream in(path_in);
@@ -31,7 +33,7 @@ signed main() {
             solver.add_edge(x, y);
         }
         solver.reduce_graph();
-        solver.run(100, 10, 0.6, 0.99);
+        solver.run(100, 10, 0.6, 0.99, 5);
         set<int> output = solver.result();
         out << output.size() << '\n';
         for (auto it : output) out << it << ' ';
@@ -39,6 +41,7 @@ signed main() {
         in.close();
         out.close();
         cout << "test " << t << " finished\n";
+
     }
 
     return 0;

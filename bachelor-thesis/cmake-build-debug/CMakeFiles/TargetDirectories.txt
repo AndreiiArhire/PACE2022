@@ -1,3 +1,3 @@
-C:/Users/andre/OneDrive/Desktop/bachelor-testcases/bachelor-thesis/cmake-build-debug/CMakeFiles/bachelor_thesis.dir
-C:/Users/andre/OneDrive/Desktop/bachelor-testcases/bachelor-thesis/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/andre/OneDrive/Desktop/bachelor-testcases/bachelor-thesis/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/andre/OneDrive/Desktop/PACE2022/bachelor-thesis/cmake-build-debug/CMakeFiles/bachelor_thesis.dir
+C:/Users/andre/OneDrive/Desktop/PACE2022/bachelor-thesis/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/andre/OneDrive/Desktop/PACE2022/bachelor-thesis/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -18,14 +18,15 @@ class SA_FVSP_NNS {
 
 private:
     time_t c_start;
-    int max_moves{}, max_fail{}, n{};
+    int max_moves{}, max_fail{}, n{}, theta{};
     map<pair<int, int>, bool> edges;
     double initial_temperature{}, temp_rate{}, seconds;
     vector<int> current_configuration, best_configuration;
     vector<set<int>> in_degree, out_degree;
     vector<pair<int, int>> candidate_list;
     set<int> feedback_vertex_set;
-    vector<int> candidates_nodes;
+    vector<int> candidates_nodes, phi;
+    vector<double> priority, probability;
 
     int evaluate_move(pair<int, int> x) {
         int node = x.first, pos = x.second, ret = -1;
@@ -66,6 +67,7 @@ private:
         return (int) candidates_nodes.size() - sz;
     }
 
+
     void apply_move(pair<int, int> move) {
         set<int> to_be_erased;
         for (int i = 0; i < current_configuration.size(); ++i) {
@@ -90,9 +92,10 @@ private:
 
 public:
 
-
     explicit SA_FVSP_NNS(int n, time_t c_start, double seconds) :
-            n(n), in_degree(n + 1, set<int>()), out_degree(n + 1, set<int>()), c_start(c_start), seconds(seconds) {}
+            n(n), in_degree(n + 1, set<int>()), out_degree(n + 1, set<int>()), c_start(c_start), priority(n + 1, 0),
+            phi(n << 1 | 1, 0), probability(n << 1 | 1, 0),
+            seconds(seconds) {}
 
     void add_edge(int x, int y) {
         edges[make_pair(x, y)] = true;
@@ -184,12 +187,15 @@ public:
         }
 
         for (auto it : nodes) {
+            priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
+                             0.3 * abs((double) in_degree[it].size() - out_degree[it].size()));
             candidates_nodes.emplace_back(it);
         }
     }
 
 
-    void run(int max_move, int max_failure, double init_temp, double tmp_rate) {
+    void run(int max_move, int max_failure, double init_temp, double tmp_rate, int t) {
+        theta = t;
         max_moves = max_move;
         max_fail = max_failure;
         initial_temperature = init_temp;
@@ -201,10 +207,25 @@ public:
             failure = true;
             do {
                 create_candidate_list();
+                sort(candidate_list.begin(), candidate_list.end(),
+                     [this](pair<int, int> a, pair<int, int> b) { return priority[a.first] < priority[b.first]; });
+                double all_phi = 0;
+                for (int i = 0; i < candidate_list.size(); ++i) {
+                    phi[i] = ceil((double) i / (double) theta) + 1;
+                    all_phi += phi[i];
+                }
+                double p = (double) rand() / (RAND_MAX);
+                pair<int, int> best_move_;
+                for (int i = 0; i < candidate_list.size(); ++i) {
+                    probability[i] = phi[i] / all_phi;
+                    p -= probability[i];
+                    if (p <= 0) {
+                        best_move_ = candidate_list[i];
+                        break;
+                    }
+                }
                 if (candidate_list.empty())
                     break;
-                pair<int, int> best_move_;
-                best_move_ = candidate_list[rand() % candidate_list.size()];
                 int eval = evaluate_move(best_move_);
                 if (eval <= 0 || pow(M_E, -eval / initial_temperature) >= ((double) rand() / (RAND_MAX))) {
                     apply_move(best_move_);
@@ -213,7 +234,6 @@ public:
                         evaluate_candidate(best_configuration.size())) {
                         best_configuration = current_configuration;
                         failure = false;
-                        cout << best_configuration.size() << '\n';
                     }
                 }
                 if ((double) (clock() - c_start) / CLOCKS_PER_SEC > seconds) {
@@ -243,7 +263,6 @@ public:
         for (auto it : feedback_vertex_set) {
             not_used.insert(it);
         }
-        cout << best_configuration.size() << '\n';
         return not_used;
     }
 
