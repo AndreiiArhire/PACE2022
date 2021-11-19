@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 
 using namespace std;
-const int tescases = 20;
+const int tescases = 5;
 vector<int> sol;
 
 vector<int> v_t[1000001], ctc[1000001], st, v[1000001];
@@ -45,14 +45,14 @@ map<pair<int, int>, bool> edges;
 signed main() {
 
 
-    for (int t = 1; t <= tescases; ++t) {
+    for (int t = 1; t <= 20; ++t) {
         cout << "test " << t << " started\n";
         string path_in =
                 "C:\\Users\\andre\\OneDrive\\Desktop\\bachelor-testcases\\correct-testcases\\grader_test" +
                 to_string(t) +
                 ".in";
         string path_out =
-                "C:\\Users\\andre\\OneDrive\\Desktop\\bachelor-testcases\\SA-DFVSP-NNS-results\\grader_test" +
+                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\SA-DFVSP-NNS-results\\grader_test" +
                 to_string(t) +
                 ".out";
         ifstream in2(path_in);
