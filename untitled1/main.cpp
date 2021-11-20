@@ -44,11 +44,10 @@ map<pair<int, int>, bool> edges;
 
 signed main() {
 
-
-    for (int t = 1; t <= 20; ++t) {
+    for (int t = 0; t <= 60; ++t) {
         cout << "test " << t << " started\n";
         string path_in =
-                "C:\\Users\\andre\\OneDrive\\Desktop\\bachelor-testcases\\correct-testcases\\grader_test" +
+                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\correct-testcases\\grader_test" +
                 to_string(t) +
                 ".in";
         string path_out =

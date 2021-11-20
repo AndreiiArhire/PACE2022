@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 
 using namespace std;
-const int NR_SECONDS = 10;
+const int NR_SECONDS = 30;
 const int testcases = 20;
 
 set<pair<int, int>> edges;
@@ -176,14 +176,9 @@ set<int> get_result() {
 }
 
 
-void reduce_graph() {
-    set<int> to_be_erased;
+vector<int> reduce_first_5(vector<int> nodes) {
+    vector<int> nodes2;
     int sw = 1;
-    vector<int> nodes, nodes2;
-    for (int i = 1; i <= n; ++i) {
-        nodes.emplace_back(i);
-    }
-
     while (sw) {
         for (auto i : nodes) { /// delete self loops
             if (!edges.count(make_pair(i, i)))
@@ -258,8 +253,10 @@ void reduce_graph() {
         nodes = nodes2;
         nodes2.clear();
     }
+    return nodes;
+}
 
-
+vector<int> reduce_op_7(vector<int> nodes) {
     for (auto it : edges) {
         if (!edges.count(make_pair(it.second, it.first))) {
             not_piv[it.first] = 1;
@@ -307,90 +304,23 @@ void reduce_graph() {
             feedback_vertex_set.erase(it);
         }
     }
-
-    nodes.clear();
-    for (int i = 1; i <= n; ++i) {
+    vector<int> nodes2;
+    for (auto i: nodes) {
         if (!feedback_vertex_set.count(i)) {
-            nodes.emplace_back(i);
+            nodes2.emplace_back(i);
         }
     }
+    return nodes2;
+}
 
-    sw = 1;
-    while (sw) {
-        for (auto i : nodes) { /// delete self loops
-            if (!edges.count(make_pair(i, i)))
-                continue;
-            feedback_vertex_set.insert(i);
-            for (auto it : in_degree[i]) {
-                edges.erase(make_pair(it, i));
-                out_degree[it].erase(i);
-            }
-            for (auto it : out_degree[i]) {
-                edges.erase(make_pair(i, it));
-                in_degree[it].erase(i);
-            }
-            in_degree[i].clear();
-            out_degree[i].clear();
-        }
-
-        for (auto i : nodes) {      /// in-coming or out-going degree than erase it
-            if (!in_degree[i].empty() && !out_degree[i].empty())
-                continue;
-            for (auto it : in_degree[i]) {
-                edges.erase(make_pair(it, i));
-                out_degree[it].erase(i);
-            }
-            for (auto it : out_degree[i]) {
-                edges.erase(make_pair(i, it));
-                in_degree[it].erase(i);
-            }
-            in_degree[i].clear();
-            out_degree[i].clear();
-        }
-        for (auto i : nodes) { // bypass nodes
-            if (edges.count(make_pair(i, i))) continue;
-            if (in_degree[i].size() == 1) {
-                int node = *in_degree[i].begin();
-                for (auto it : out_degree[i]) {
-                    add_edge_SA(node, it);
-                }
-                for (auto it : in_degree[i]) {
-                    edges.erase(make_pair(it, i));
-                    out_degree[it].erase(i);
-                }
-                for (auto it : out_degree[i]) {
-                    edges.erase(make_pair(i, it));
-                    in_degree[it].erase(i);
-                }
-                in_degree[i].clear();
-                out_degree[i].clear();
-            }
-            if (out_degree[i].size() == 1) {
-                int node = *out_degree[i].begin();
-                for (auto it : in_degree[i]) {
-                    add_edge_SA(it, node);
-                }
-                for (auto it : in_degree[i]) {
-                    edges.erase(make_pair(it, i));
-                    out_degree[it].erase(i);
-                }
-                for (auto it : out_degree[i]) {
-                    edges.erase(make_pair(i, it));
-                    in_degree[it].erase(i);
-                }
-                in_degree[i].clear();
-                out_degree[i].clear();
-            }
-        }
-        for (auto i : nodes) {
-            if (!in_degree[i].empty())
-                nodes2.emplace_back(i);
-        }
-        sw = nodes.size() != nodes2.size();
-        nodes = nodes2;
-        nodes2.clear();
+void reduce_graph() {
+    vector<int> nodes;
+    for (int i = 1; i <= n; ++i) {
+        nodes.emplace_back(i);
     }
-
+    nodes = reduce_first_5(nodes);
+    nodes = reduce_op_7(nodes);
+    nodes = reduce_first_5(nodes);
     candidates_nodes.clear();
     for (auto it : nodes) {
         priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
@@ -510,11 +440,10 @@ void clear_sets() {
     not_piv.clear();
 }
 
-
 signed main() {
 
     srand(0);
-    for (int t = 1; t <= 20; ++t) {
+    for (int t = 0; t <= 1; ++t) {
         c_start = clock();
         cout << "test " << t << " began\n";
         string path_in =
@@ -536,7 +465,6 @@ signed main() {
             add_edge(x, y);
         }
         contract_edges();
-
         reduce_graph();
         run();
         set<int> output = get_result();
