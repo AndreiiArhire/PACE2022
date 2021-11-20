@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 
 using namespace std;
-const int NR_SECONDS = 30;
+const int NR_SECONDS = 600 - 3;
 const int testcases = 20;
 
 set<pair<int, int>> edges;
@@ -256,7 +256,7 @@ vector<int> reduce_first_5(vector<int> nodes) {
     return nodes;
 }
 
-vector<int> reduce_op_7(vector<int> nodes) {
+vector<int> apply_CORE_opration(vector<int> nodes) {
     for (auto it : edges) {
         if (!edges.count(make_pair(it.second, it.first))) {
             not_piv[it.first] = 1;
@@ -313,13 +313,44 @@ vector<int> reduce_op_7(vector<int> nodes) {
     return nodes2;
 }
 
+
+void apply_DOME_operation(const vector<int> &nodes) {
+    vector<pair<int, int>> to_be_erased;
+    for (auto it : edges) {
+        int dome = 1;
+        for (auto node : in_degree[it.first]) {
+            if (!edges.count(make_pair(it.first, node)) && !edges.count(make_pair(node, it.second))) {
+                dome = 0;
+                break;
+            }
+        }
+        if (!dome) {
+            dome = 1;
+            for (auto node : out_degree[it.second]) {
+                if (!edges.count(make_pair(node, it.second)) && !edges.count(make_pair(it.first, node))) {
+                    dome = 0;
+                    break;
+                }
+            }
+        }
+        if (dome) {
+            to_be_erased.emplace_back(it);
+        }
+    }
+    for (auto it : to_be_erased) {
+        edges.erase(it);
+    }
+}
+
 void reduce_graph() {
     vector<int> nodes;
     for (int i = 1; i <= n; ++i) {
         nodes.emplace_back(i);
     }
     nodes = reduce_first_5(nodes);
-    nodes = reduce_op_7(nodes);
+    nodes = apply_CORE_opration(nodes);
+    nodes = reduce_first_5(nodes);
+    apply_DOME_operation(nodes);
     nodes = reduce_first_5(nodes);
     candidates_nodes.clear();
     for (auto it : nodes) {
@@ -362,7 +393,7 @@ void dfs_t(int nod) {
     ctc[nr_ctc].emplace_back(nod);
 }
 
-void contract_edges() {
+void apply_PIE_opration() {
     int x, y;
     for (auto it : edges) {
         x = it.first;
@@ -443,7 +474,7 @@ void clear_sets() {
 signed main() {
 
     srand(0);
-    for (int t = 0; t <= 1; ++t) {
+    for (int t = 0; t <= 50; ++t) {
         c_start = clock();
         cout << "test " << t << " began\n";
         string path_in =
@@ -464,7 +495,7 @@ signed main() {
             in >> x >> y;
             add_edge(x, y);
         }
-        contract_edges();
+        apply_PIE_opration();
         reduce_graph();
         run();
         set<int> output = get_result();

@@ -44,7 +44,7 @@ map<pair<int, int>, bool> edges;
 
 signed main() {
 
-    for (int t = 0; t <= 60; ++t) {
+    for (int t = 0; t <= 9; ++t) {
         cout << "test " << t << " started\n";
         string path_in =
                 "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\correct-testcases\\grader_test" +
