@@ -49,7 +49,7 @@ map<pair<int, int>, bool> edges;
 
 signed main() {
 
-    for (int t = 5; t <= 5; ++t) {
+    for (int t = 1; t <= 6; ++t) {
         bad.clear();
         bad.resize(1000005,false);
         cout << "test " << t << " started\n";
