@@ -521,6 +521,8 @@ void testcase(const string &p_in, const string &p_out) {
     for (auto it : feedback_vertex_set) out << it << ' ';
     out << '\n';
     clear_sets();
+    in.close();
+    out.close();
 }
 
 signed main() {

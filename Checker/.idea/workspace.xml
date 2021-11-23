@@ -1,16 +1,119 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated>
+      <config projectName="Checker" targetName="Checker" />
+    </generated>
+  </component>
   <component name="CMakeSettings">
     <configurations>
       <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" ENABLED="true" />
     </configurations>
   </component>
+  <component name="ChangeListManager">
+    <list default="true" id="bc9bc09a-d7fa-4b0a-a00e-fffad15df6e2" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/main.cpp.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/main.cpp.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/objects.a" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/objects.a" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Checker.exe" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Checker.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test11.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test11.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test12.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test12.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test13.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test13.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test14.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test14.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test15.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test15.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test16.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test16.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test17.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test17.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test18.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test18.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test19.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test19.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test20.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test20.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test21.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test21.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test22.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test22.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test23.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test23.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test24.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test24.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test25.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test25.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test26.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test26.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test27.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test27.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test28.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test28.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test29.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test29.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test30.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test30.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test31.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test31.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test32.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test32.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test33.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test33.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test34.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test34.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test35.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test35.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test36.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test36.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test37.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test37.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test38.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test38.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test39.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test39.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test40.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test40.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test41.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test41.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test42.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test42.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test43.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test43.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test44.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test44.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test45.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test45.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test46.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test46.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test47.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test47.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test48.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test48.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test49.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test49.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test50.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test50.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test51.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test51.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test52.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test52.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test53.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test53.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test54.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test54.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test55.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test55.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test56.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test56.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test57.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test57.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test58.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test58.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test59.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test59.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test60.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test60.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test61.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test61.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test62.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test62.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test63.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test63.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test64.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test64.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test65.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test65.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test66.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test66.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test67.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test67.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test68.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test68.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test69.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test69.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test70.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test70.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SA-DFVS-NNS-source/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/../SA-DFVS-NNS-source/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SA-DFVS-NNS-source/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../SA-DFVS-NNS-source/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../main/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/../main/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectId" id="21Jl5rlO2xHg19ibq52uKWP4CoJ" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="cf.first.check.clang-format" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+  </component>
   <component name="RunManager">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="Checker" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Checker" TARGET_NAME="Checker" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Checker" RUN_TARGET_NAME="Checker">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -21,5 +124,22 @@
         <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="bc9bc09a-d7fa-4b0a-a00e-fffad15df6e2" name="Default Changelist" comment="" />
+      <created>1637666891078</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1637666891078</updated>
+      <workItem from="1637666892731" duration="675000" />
+      <workItem from="1637669060475" duration="1707000" />
+      <workItem from="1637671226520" duration="6973000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
 </project>

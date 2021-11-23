@@ -5,8 +5,8 @@ const int tescases = 5;
 vector<int> sol;
 
 vector<int> v_t[1000001], ctc[1000001], st, v[1000001];
-int used[1000001], nrctc, n, m, bad[1000001];
-
+int used[1000001], nrctc, n, m, nr_cc;
+vector<bool> bad(1000000, true);
 void dfs(int nod) {
     used[nod] = 1;
     for (int vecin : v[nod]) {
@@ -24,19 +24,28 @@ void dfs_t(int nod) {
 }
 
 void solve() {
-    for (int i = 1; i <= n; ++i) if (!used[i] && !bad[i]) dfs(i);
-
+    int cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        if (!used[i] && !bad[i]) {
+            ++ cnt ;
+            dfs(i);
+        }
+    }
     while (!st.empty()) {
         int nod = st.back();
         if (used[nod] != 2 && !bad[nod]) dfs_t(nod), ++nrctc;
         st.pop_back();
     }
+    cout << nrctc << '\n';
+    int sum = 0;
     for (int i = 0; i < nrctc; ++i) {
+        sum += ctc[i].size();
         if (ctc[i].size() != 1) {
             cout << "!!!\n";
             exit(0);
         }
     }
+    cout << sum << '\n';
 }
 
 
@@ -44,26 +53,28 @@ map<pair<int, int>, bool> edges;
 
 signed main() {
 
-    for (int t = 1; t <= 70; ++t) {
+    for (int t = 3; t <= 3; ++t) {
+        bad.clear();
+        bad.resize(1000005,true);
         cout << "test " << t << " started\n";
         string path_in =
                 "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\correct-testcases\\grader_test" +
                 to_string(t) +
                 ".in";
         string path_out =
-                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\SA-DFVSP-NNS-results\\grader_test" +
+                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\GA-results\\grader_test" +
                 to_string(t) +
                 ".out";
         ifstream in2(path_in);
         ifstream in(path_out);
         int x, y;
 
-        in >> n;
+        in >> n >> nr_cc;
+        cout << nr_cc << '\n';
         for (int i = 1; i <= n; ++i) {
             in >> x;
-            bad[x] = true;
+            bad[x] = false;
         }
-
         in.close();
         in2 >> n >> m;
         for (int i = 1; i <= m; ++i) {
