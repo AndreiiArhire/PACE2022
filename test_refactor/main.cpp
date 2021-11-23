@@ -6,7 +6,7 @@ const int testcases = 20;
 
 int main() {
     int a, b, c, n, m;
-    for (int i = 21; i <= 40; ++i) {
+    for (int i = 61; i <= 70; ++i) {
         cout << i << '\n';
         string path_in =
                 "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\brute-testcases\\grader_test" + to_string(i) +

@@ -347,7 +347,9 @@ void reduce_graph() {
     for (int i = 1; i <= n; ++i) {
         nodes.emplace_back(i);
     }
+    cout << candidates_nodes.size() << ' ' << edges.size() << '\n';
     nodes = reduce_first_5(nodes);
+    cout << nodes.size() << ' ' << edges.size() << '\n';
     nodes = apply_CORE_opration(nodes);
     nodes = reduce_first_5(nodes);
     apply_DOME_operation(nodes);
@@ -474,7 +476,7 @@ void clear_sets() {
 signed main() {
 
     srand(0);
-    for (int t = 0; t <= 50; ++t) {
+    for (int t = 3; t <= 3; ++t) {
         c_start = clock();
         cout << "test " << t << " began\n";
         string path_in =
@@ -495,7 +497,13 @@ signed main() {
             in >> x >> y;
             add_edge(x, y);
         }
-        apply_PIE_opration();
+        for (auto it : edges) {
+            x = it.first;
+            y = it.second;
+            in_degree[y].insert(x);
+            out_degree[x].insert(y);
+        }
+        //apply_PIE_opration();
         reduce_graph();
         run();
         set<int> output = get_result();
