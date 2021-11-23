@@ -36,16 +36,12 @@ void solve() {
         if (used[nod] != 2 && !bad[nod]) dfs_t(nod), ++nrctc;
         st.pop_back();
     }
-    cout << nrctc << '\n';
-    int sum = 0;
     for (int i = 0; i < nrctc; ++i) {
-        sum += ctc[i].size();
         if (ctc[i].size() != 1) {
             cout << "!!!\n";
             exit(0);
         }
     }
-    cout << sum << '\n';
 }
 
 
@@ -53,9 +49,9 @@ map<pair<int, int>, bool> edges;
 
 signed main() {
 
-    for (int t = 3; t <= 3; ++t) {
+    for (int t = 5; t <= 5; ++t) {
         bad.clear();
-        bad.resize(1000005,true);
+        bad.resize(1000005,false);
         cout << "test " << t << " started\n";
         string path_in =
                 "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\correct-testcases\\grader_test" +
@@ -69,11 +65,10 @@ signed main() {
         ifstream in(path_out);
         int x, y;
 
-        in >> n >> nr_cc;
-        cout << nr_cc << '\n';
+        in >> n ;
         for (int i = 1; i <= n; ++i) {
             in >> x;
-            bad[x] = false;
+            bad[x] = true;
         }
         in.close();
         in2 >> n >> m;
