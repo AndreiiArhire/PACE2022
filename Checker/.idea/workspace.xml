@@ -13,38 +13,7 @@
   <component name="ChangeListManager">
     <list default="true" id="bc9bc09a-d7fa-4b0a-a00e-fffad15df6e2" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/main.cpp.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/main.cpp.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/objects.a" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/objects.a" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Checker.exe" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Checker.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test10.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test10.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test17.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test17.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test18.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test18.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test19.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test19.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test20.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test20.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test25.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test25.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test27.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test27.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test29.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test29.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test30.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test30.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test32.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test32.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test33.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test33.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test34.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test34.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test35.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test35.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test36.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test36.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test37.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test37.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test38.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test38.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test39.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test39.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test40.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test40.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test41.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test41.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test42.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test42.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test43.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test43.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test44.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test44.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test45.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test45.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test46.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test46.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test47.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test47.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test6.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test6.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../GA-results/grader_test8.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results/grader_test8.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../GA-results2/grader_test10.out" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-results2/grader_test10.out" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../GA-source/cmake-build-debug/CMakeFiles/GA_source.dir/main.cpp.obj" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-source/cmake-build-debug/CMakeFiles/GA_source.dir/main.cpp.obj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../GA-source/cmake-build-debug/CMakeFiles/GA_source.dir/objects.a" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-source/cmake-build-debug/CMakeFiles/GA_source.dir/objects.a" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../GA-source/cmake-build-debug/GA_source.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../GA-source/cmake-build-debug/GA_source.exe" afterDir="false" />
