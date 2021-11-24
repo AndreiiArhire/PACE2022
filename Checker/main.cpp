@@ -49,7 +49,7 @@ map<pair<int, int>, bool> edges;
 
 signed main() {
 
-    for (int t = 1; t <= 6; ++t) {
+    for (int t = 10; t <= 10; ++t) {
         bad.clear();
         bad.resize(1000005,false);
         cout << "test " << t << " started\n";
@@ -58,7 +58,7 @@ signed main() {
                 to_string(t) +
                 ".in";
         string path_out =
-                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\GA-results\\grader_test" +
+                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\GA-results2\\grader_test" +
                 to_string(t) +
                 ".out";
         ifstream in2(path_in);

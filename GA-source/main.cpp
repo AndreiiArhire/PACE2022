@@ -4,15 +4,17 @@ using namespace std;
 
 set<pair<int, int>> edges;
 vector<vector<int>> ctc;
-vector<int> used, ctc_ind, st, used_pie, not_piv, individual_gene, feindividual_gene;
-int n, nr_ctc, m;
+const int NR_SECONDS = 600 - 5;
+vector<int> used, ctc_ind, st, used_pie, not_piv, individual_gene;
+int n, nr_ctc, m, theta = 3;
 time_t c_start;
-int pie_counter, initial_population_size = 20, number_of_generations = 100, best_female_fitness;
+int pie_counter, initial_population_size = 50, number_of_generations = 300, best_female_fitness;
 vector<vector<int>> male_population, female_population;
 vector<int> candidates_nodes, individual, fitness_chromosome, best_female_chromosome;
 vector<set<int>> in_degree, out_degree;
+vector<vector<int>> in_degree_, out_degree_;
 set<int> feedback_vertex_set;
-
+vector<double> phi_males, phi_females, probability_males, probability_females;
 
 void add_edge(int x, int y) {
     /*O(lgN)*/
@@ -45,9 +47,17 @@ void dfs(int nod) {
     st.emplace_back(nod);
 }
 
+void dfs_(int nod) {
+    used[nod] = 1;
+    for (int i : out_degree_[nod]) {
+        if (!used[i]) dfs_(i);
+    }
+    st.emplace_back(nod);
+}
+
 void dfs_individual(int nod) {
     used[nod] = 1;
-    for (int i : out_degree[nod]) {
+    for (int i : out_degree_[nod]) {
         if (!used[i] && individual_gene[i]) dfs_individual(i);
     }
     st.emplace_back(nod);
@@ -64,7 +74,7 @@ void dfs_t(int nod) {
 
 void dfs_t_male(int nod) {
     used[nod] = 2;
-    for (int i : in_degree[nod]) {
+    for (int i : in_degree_[nod]) {
         if (used[i] != 2 && individual_gene[i]) dfs_t_male(i);
     }
     ctc_ind[nod] = nr_ctc;
@@ -343,6 +353,16 @@ void contract_graph() {
     loop();
     erase_DOM_edges();
     loop();
+
+    for (auto it : candidates_nodes) {
+        for (auto it2 : in_degree[it]) {
+            in_degree_[it].emplace_back(it2);
+        }
+        for (auto it2 : out_degree[it]) {
+            out_degree_[it].emplace_back(it2);
+        }
+    }
+
 }
 
 
@@ -351,10 +371,11 @@ void set_size() {
     nr_ctc = 0;
     pie_counter = 0;
     individual_gene.resize(n + 1, 0);
-    feindividual_gene.resize(n + 1, 0);
     ctc.resize(n + 1, vector<int>());
     in_degree.resize(n + 1, set<int>());
+    in_degree_.resize(n + 1, vector<int>());
     out_degree.resize(n + 1, set<int>());
+    out_degree_.resize(n + 1, vector<int>());
     used.resize(n + 1, 0);
     not_piv.resize(n + 1, 0);
     used_pie.resize(n + 1, 0);
@@ -363,10 +384,13 @@ void set_size() {
 
 void clear_sets() {
     /*O(N*lgN)*/
+    phi_females.clear();
+    phi_males.clear();
+    probability_females.clear();
+    probability_males.clear();
     best_female_fitness = 0;
     best_female_chromosome.clear();
     individual_gene.clear();
-    feindividual_gene.clear();
     male_population.clear();
     female_population.clear();
     edges.clear();
@@ -380,20 +404,22 @@ void clear_sets() {
     nr_ctc = 0;
     candidates_nodes.clear();
     in_degree.clear();
+    in_degree_.clear();
     out_degree.clear();
+    out_degree_.clear();
     feedback_vertex_set.clear();
     not_piv.clear();
 }
 
 int compute_males_fitness() {
-    for (int i = 0; i < fitness_chromosome.size(); ++i) {
+    for (int i = 0; i < candidates_nodes.size(); ++i) {
         if (fitness_chromosome[i]) {
             individual_gene[candidates_nodes[i]] = 1;
             individual.emplace_back(candidates_nodes[i]);
         }
     }
     compute_SCC_individual();
-    for (int i = 0; i < fitness_chromosome.size(); ++i) {
+    for (int i = 0; i < candidates_nodes.size(); ++i) {
         if (fitness_chromosome[i]) {
             individual_gene[candidates_nodes[i]] = 0;
             individual.pop_back();
@@ -404,40 +430,34 @@ int compute_males_fitness() {
 
 int compute_females_fitness() {
     int ret = 0;
-    for (auto it : fitness_chromosome) {
-        ret += it;
+    for (int i = 0; i < candidates_nodes.size(); ++i) {
+        ret += fitness_chromosome[i];
     }
     return ret;
 }
 
 
-void testcase(const string &p_in, const string &p_out) {
-    ifstream in(p_in);
-    ofstream out(p_out);
-    int x, y;
-    in >> n >> m;
-    set_size();
-    for (int i = 1; i <= m; ++i) {
-        in >> x >> y;
-        add_edge(x, y);
-    }
-
-    contract_graph();
+void run_GA() {
+    if (candidates_nodes.empty()) return;
     vector<pair<int, int>> best_males, best_females;
     vector<pair<int, int>> new_best_males, new_best_females;
+    phi_females.resize(initial_population_size);
+    phi_males.resize(initial_population_size);
+    probability_females.resize(initial_population_size);
+    probability_males.resize(initial_population_size);
     for (int sz = 1; sz <= initial_population_size; ++sz) {
         map<int, int> position_in_top;
         for (int candidates_node : candidates_nodes) {
             used[candidates_node] = 0;
         }
-        for (auto i : candidates_nodes) if (!used[i]) dfs(i);
+        for (auto i : candidates_nodes) if (!used[i]) dfs_(i);
         vector<int> top_sort = st;
         st.clear();
         for (int j = (int) top_sort.size() - 1; j >= 0; --j) {
             int i = top_sort[j];
             vector<int> not_ok;
             used[i] = 0;
-            for (auto it2 : out_degree[i]) {
+            for (auto it2 : out_degree_[i]) {
                 if (used[it2] == 0) {
                     not_ok.emplace_back(it2);
                 }
@@ -449,27 +469,47 @@ void testcase(const string &p_in, const string &p_out) {
                     used[it2] = 1;
             }
         }
-        vector<int> chromosome(candidates_nodes.size());
+        vector<int> chromosome(candidates_nodes.size() + ceil(log2(candidates_nodes.size())) + 2);
         for (int i = 0; i < top_sort.size(); ++i) {
             position_in_top[top_sort[i]] = i;
         }
         for (int i = 0; i < candidates_nodes.size(); ++i) {
             chromosome[i] = 1 - used[top_sort[position_in_top[candidates_nodes[i]]]];
         }
+        for (int i = candidates_nodes.size(); i < candidates_nodes.size() + ceil(log2(candidates_nodes.size())); ++i) {
+            chromosome[i] = rand() % 2;
+        }
+        for (int i = candidates_nodes.size() + ceil(log2(candidates_nodes.size()));
+             i < candidates_nodes.size() + ceil(log2(candidates_nodes.size())) + 2; ++i) {
+            if (!(rand() % 10)) {
+                chromosome[i] = 1;
+            } else {
+                chromosome[i] = 0;
+            }
+        }
         fitness_chromosome = chromosome;
         best_females.emplace_back(female_population.size(), compute_females_fitness());
         female_population.emplace_back(chromosome);
-        for (int i = 0; i < chromosome.size(); ++i) {
+        for (int i = 0; i < candidates_nodes.size() + ceil(log2(candidates_nodes.size())); ++i) {
             if (!(rand() % 4))
                 chromosome[i] = 1;
             else
                 chromosome[i] = 0;
+        }
+        for (int i = candidates_nodes.size() + ceil(log2(candidates_nodes.size()));
+             i < candidates_nodes.size() + ceil(log2(candidates_nodes.size())) + 2; ++i) {
+            if (!(rand() % 10)) {
+                chromosome[i] = 1;
+            } else {
+                chromosome[i] = 0;
+            }
         }
         fitness_chromosome = chromosome;
         compute_males_fitness();
         best_males.emplace_back(male_population.size(), compute_males_fitness());
         male_population.emplace_back(chromosome);
     }
+
     sort(best_males.begin(), best_males.end(),
          [](const pair<int, int> i, const pair<int, int> j) { return i.second > j.second; });
     while (best_males.size() > initial_population_size) {
@@ -486,27 +526,97 @@ void testcase(const string &p_in, const string &p_out) {
         best_female_chromosome = female_population[best_females[0].first];
     }
     int best_male_fitness = 0;
+
+    double sum_males = 0, sum_females = 0;
+    for (int i = 0; i < phi_males.size(); ++i) {
+        phi_males[i] = (double) (phi_males.size() - i - 1) / (double) theta + 1;
+        phi_females[i] = (double) ((phi_females.size() - i - 1)) / (double) theta + 1;
+        sum_males += phi_males[i];
+        sum_females += phi_females[i];
+    }
+    for (int i = 0; i < phi_males.size(); ++i) {
+        probability_males[i] = phi_males[i] / sum_males;
+        probability_females[i] = phi_females[i] / sum_females;
+    }
+
+
     for (int gen = 1; gen <= number_of_generations; ++gen) {
         vector<vector<int>> new_female_population, new_male_population;
-        for (auto male : best_males) {
-            for (auto female : best_females) {
-                vector<int> offspring(male_population[male.first].size());
-                for (int i = 0; i < offspring.size(); ++i) {
-                    offspring[i] =
-                            rand() % 2 == 1 ? male_population[male.first][i] : female_population[female.first][i];
-                }
-                fitness_chromosome = offspring;
-                int males_fitness = compute_males_fitness();
-                int females_fitness = compute_females_fitness();
-                if (males_fitness == females_fitness) {
-                    new_best_females.emplace_back(new_female_population.size(), females_fitness);
-                    new_female_population.emplace_back(offspring);
-                } else {
-                    new_best_males.emplace_back(new_male_population.size(), males_fitness);
-                    new_male_population.emplace_back(offspring);
-                }
+
+        /*
+        for ( auto male : best_males )    {
+            for ( auto female : best_females )  {
+
             }
         }
+        */
+
+        for (int k = 1; k <= 400; ++k) {
+            double rand_males = ((double) rand() / (RAND_MAX));
+            double rand_females = ((double) rand() / (RAND_MAX));
+            double curr_males = 0;
+            double curr_females = 0;
+            int male_index;
+            int female_index;
+            for (int i = 0;; ++i) {
+                curr_males += probability_males[i];
+                if (curr_males >= rand_males) {
+                    male_index = i;
+                    break;
+                }
+            }
+            for (int i = 0;; ++i) {
+                curr_females += probability_females[i];
+                if (curr_females >= rand_females) {
+                    female_index = i;
+                    break;
+                }
+            }
+            auto male = best_males[male_index];
+            auto female = best_females[female_index];
+            vector<int> offspring(male_population[male.first].size());
+            for (int i = 0; i < offspring.size() - 2; ++i) {
+                offspring[i] =
+                        rand() % 2 == 1 ? male_population[male.first][i] : female_population[female.first][i];
+            }
+            offspring[offspring.size() - 2] =
+                    rand() % 2 == 1 ? male_population[male.first][offspring.size() - 2]
+                                    : male_population[male.first][offspring.size() - 1];
+            offspring[offspring.size() - 1] =
+                    rand() % 2 == 1 ? female_population[female.first][offspring.size() - 2]
+                                    : female_population[female.first][offspring.size() - 1];
+
+            if (offspring[offspring.size() - 1] == 0 && offspring[offspring.size() - 2] == 0) {
+                if (!(rand() % 10)) {
+                    offspring[offspring.size() - 2] = 1;
+                }
+            }
+            int length = ceil(log2(candidates_nodes.size()));
+            if (offspring[offspring.size() - 1] == 1 && offspring[offspring.size() - 2] == 1) {
+                for (int i = 0; i < candidates_nodes.size(); ++i) {
+                    offspring[i] ^= offspring[candidates_nodes.size() + i % length];
+                }
+                for (int i = candidates_nodes.size(); i < candidates_nodes.size() + length; ++i) {
+                    offspring[i] = rand() % 2;
+                }
+                offspring[offspring.size() - 1] = 0;
+                offspring[offspring.size() - 2] = 0;
+            }
+            fitness_chromosome = offspring;
+            int males_fitness = compute_males_fitness();
+            int females_fitness = compute_females_fitness();
+            if (males_fitness == females_fitness) {
+                new_best_females.emplace_back(new_female_population.size(), females_fitness);
+                new_female_population.emplace_back(offspring);
+            } else {
+                new_best_males.emplace_back(new_male_population.size(), males_fitness);
+                new_male_population.emplace_back(offspring);
+            }
+            if ((double) (clock() - c_start) / CLOCKS_PER_SEC > NR_SECONDS) {
+                break;
+            }
+        }
+
         for (int i = 0; new_best_males.size() < initial_population_size; ++i) {
             new_best_males.emplace_back(best_males[i]);
             new_male_population.emplace_back(male_population[best_males[i].first]);
@@ -546,13 +656,32 @@ void testcase(const string &p_in, const string &p_out) {
         }
         best_male_fitness = max(best_male_fitness, best_males[0].second);
         cout << best_female_fitness << ' ' << best_male_fitness << '\n';
+        if ((double) (clock() - c_start) / CLOCKS_PER_SEC > NR_SECONDS) {
+            break;
+        }
     }
 
-    for (int i = 0; i < best_female_chromosome.size(); ++i) {
+    for (int i = 0; i < candidates_nodes.size(); ++i) {
         if (!best_female_chromosome[i]) {
             feedback_vertex_set.insert(candidates_nodes[i]);
         }
     }
+}
+
+
+void testcase(const string &p_in, const string &p_out) {
+    ifstream in(p_in);
+    ofstream out(p_out);
+    int x, y;
+    in >> n >> m;
+    set_size();
+    for (int i = 1; i <= m; ++i) {
+        in >> x >> y;
+        add_edge(x, y);
+    }
+
+    contract_graph();
+    run_GA();
 
     out << feedback_vertex_set.size() << '\n';
     for (auto it : feedback_vertex_set) out << it << ' ';
@@ -567,8 +696,8 @@ void testcase(const string &p_in, const string &p_out) {
 signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
-    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results\grader_test)";
-    for (int t = 1; t <= 70; ++t) {
+    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)";
+    for (int t = 10; t <= 10; ++t) {
         c_start = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
