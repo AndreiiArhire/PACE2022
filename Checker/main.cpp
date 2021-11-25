@@ -49,16 +49,16 @@ map<pair<int, int>, bool> edges;
 
 signed main() {
 
-    for (int t = 10; t <= 10; ++t) {
+    for (int t = 24; t <= 24; ++t) {
         bad.clear();
         bad.resize(1000005,false);
         cout << "test " << t << " started\n";
         string path_in =
-                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\correct-testcases\\grader_test" +
+                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)" +
                 to_string(t) +
                 ".in";
         string path_out =
-                "C:\\Users\\andre\\OneDrive\\Desktop\\PACE2022\\GA-results2\\grader_test" +
+                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\SA-DFVSP-NNS-results\grader_test)" +
                 to_string(t) +
                 ".out";
         ifstream in2(path_in);

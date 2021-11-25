@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 
 using namespace std;
-const int NR_SECONDS = 600 - 3;
+const int NR_SECONDS = 20 - 3;
 const int testcases = 20;
 
 set<pair<int, int>> edges;
@@ -40,10 +40,11 @@ void dfs_pie(int nod) {
     }
 }
 
+
 void dfs(int nod) {
     used[nod] = 1;
     for (int i : out_degree[nod]) {
-        if (!used[i]) dfs(i);
+        if (!used[i] && !in_degree[nod].count(i)) dfs(i);
     }
     st.emplace_back(nod);
 }
@@ -51,33 +52,10 @@ void dfs(int nod) {
 void dfs_t(int nod) {
     used[nod] = 2;
     for (int i : in_degree[nod]) {
-        if (used[i] != 2) dfs_t(i);
+        if (used[i] != 2 && !out_degree[nod].count(i)) dfs_t(i);
     }
     ctc_ind[nod] = nr_ctc;
     ctc[nr_ctc].emplace_back(nod);
-}
-
-bool erase_PI_edges() {
-    /*O((N+M)lgN)*/
-    bool ret = false;
-    for (auto i : candidates_nodes) used_pie[i] = 0;
-    for (auto i : candidates_nodes) {
-        if (!used_pie[i]) {
-            ++pie_counter;
-            dfs_pie(i);
-        }
-    }
-    vector<pair<int, int>> temp;
-    for (auto it : edges) {
-        if (used_pie[it.first] == used_pie[it.second] && !edges.count(make_pair(it.second, it.first))) {
-            temp.emplace_back(it);
-        }
-    }
-    ret |= (bool) (temp.size());
-    for (auto it : temp) {
-        erase_edge(it.first, it.second);
-    }
-    return ret;
 }
 
 bool erase_SCC_edges() {
@@ -95,6 +73,7 @@ bool erase_SCC_edges() {
     }
     vector<pair<int, int>> to_be_erased;
     for (auto it : edges) {
+        if (edges.count(make_pair(it.second, it.first))) continue;
         if (ctc_ind[it.first] != ctc_ind[it.second]) {
             to_be_erased.emplace_back(it);
             ret = true;
@@ -307,13 +286,11 @@ void contract_graph() {
     for (int i = 1; i <= n; ++i) {
         candidates_nodes.emplace_back(i);
     }
-    loop();
-    erase_PI_edges();
     erase_SCC_edges();
     loop();
     erase_CORE_nodes();
     loop();
-    erase_DOM_edges();
+    //erase_DOM_edges();
     loop();
     for (auto it : candidates_nodes) {
         priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
@@ -510,13 +487,6 @@ void testcase(const string &p_in, const string &p_out) {
     cout << candidates_nodes.size() << ' ' << edges.size() << '\n';
     run();
     get_result();
-    /*
-    for (int i = 0; i < nr_ctc; ++i) {
-        candidates_nodes = ctc[i];
-        run();
-
-    }
-     */
     out << feedback_vertex_set.size() << '\n';
     for (auto it : feedback_vertex_set) out << it << ' ';
     out << '\n';
@@ -530,7 +500,7 @@ signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\SA-DFVSP-NNS-results\grader_test)";
-    for (int t = 39; t <= 39; ++t) {
+    for (int t = 24; t <= 24; ++t) {
         c_start = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");

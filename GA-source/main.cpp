@@ -8,7 +8,7 @@ const int NR_SECONDS = 600 - 5;
 vector<int> used, ctc_ind, st, used_pie, not_piv, individual_gene;
 int n, nr_ctc, m, theta = 3;
 time_t c_start;
-int pie_counter, initial_population_size = 50, number_of_generations = 300, best_female_fitness;
+int initial_population_size = 50, number_of_generations = 300, best_female_fitness;
 vector<vector<int>> male_population, female_population;
 vector<int> candidates_nodes, individual, fitness_chromosome, best_female_chromosome;
 vector<set<int>> in_degree, out_degree;
@@ -30,19 +30,10 @@ void erase_edge(int x, int y) {
     out_degree[x].erase(y);
 }
 
-void dfs_pie(int nod) {
-    used_pie[nod] = pie_counter;
-    for (int i : out_degree[nod]) {
-        if (!used_pie[i] && in_degree[nod].count(i)) {
-            dfs_pie(i);
-        }
-    }
-}
-
 void dfs(int nod) {
     used[nod] = 1;
     for (int i : out_degree[nod]) {
-        if (!used[i]) dfs(i);
+        if (!used[i] && !in_degree[nod].count(i)) dfs(i);
     }
     st.emplace_back(nod);
 }
@@ -66,7 +57,7 @@ void dfs_individual(int nod) {
 void dfs_t(int nod) {
     used[nod] = 2;
     for (int i : in_degree[nod]) {
-        if (used[i] != 2) dfs_t(i);
+        if (used[i] != 2 && !out_degree[nod].count(i)) dfs_t(i);
     }
     ctc_ind[nod] = nr_ctc;
     ctc[nr_ctc].emplace_back(nod);
@@ -81,31 +72,7 @@ void dfs_t_male(int nod) {
     ctc[nr_ctc].emplace_back(nod);
 }
 
-
-bool erase_PI_edges() {
-    /*O((N+M)lgN)*/
-    bool ret = false;
-    for (auto i : candidates_nodes) used_pie[i] = 0;
-    for (auto i : candidates_nodes) {
-        if (!used_pie[i]) {
-            ++pie_counter;
-            dfs_pie(i);
-        }
-    }
-    vector<pair<int, int>> temp;
-    for (auto it : edges) {
-        if (used_pie[it.first] == used_pie[it.second] && !edges.count(make_pair(it.second, it.first))) {
-            temp.emplace_back(it);
-        }
-    }
-    ret |= (bool) (temp.size());
-    for (auto it : temp) {
-        erase_edge(it.first, it.second);
-    }
-    return ret;
-}
-
-bool compute_SCC_individual() {
+void compute_SCC_individual() {
     nr_ctc = 0;
     ctc.clear();
     ctc.resize(n + 1, vector<int>());
@@ -133,6 +100,7 @@ bool erase_SCC_edges() {
     }
     vector<pair<int, int>> to_be_erased;
     for (auto it : edges) {
+        if (edges.count(make_pair(it.second, it.first))) continue;
         if (ctc_ind[it.first] != ctc_ind[it.second]) {
             to_be_erased.emplace_back(it);
             ret = true;
@@ -341,17 +309,15 @@ void loop() {
 
 void contract_graph() {
     /*O(N(N+M)lgN*/
-    bool change = true;
     for (int i = 1; i <= n; ++i) {
         candidates_nodes.emplace_back(i);
     }
     loop();
-    erase_PI_edges();
     erase_SCC_edges();
     loop();
     erase_CORE_nodes();
     loop();
-    erase_DOM_edges();
+    //erase_DOM_edges();
     loop();
 
     for (auto it : candidates_nodes) {
@@ -369,7 +335,6 @@ void contract_graph() {
 void set_size() {
     /*O(N*lgN)*/
     nr_ctc = 0;
-    pie_counter = 0;
     individual_gene.resize(n + 1, 0);
     ctc.resize(n + 1, vector<int>());
     in_degree.resize(n + 1, set<int>());
@@ -479,7 +444,7 @@ void run_GA() {
         for (int i = candidates_nodes.size(); i < candidates_nodes.size() + ceil(log2(candidates_nodes.size())); ++i) {
             chromosome[i] = rand() % 2;
         }
-        for (int i = candidates_nodes.size() + ceil(log2(candidates_nodes.size()));
+        for (int i = (int) candidates_nodes.size() + (int) ceil(log2(candidates_nodes.size()));
              i < candidates_nodes.size() + ceil(log2(candidates_nodes.size())) + 2; ++i) {
             if (!(rand() % 10)) {
                 chromosome[i] = 1;
@@ -496,7 +461,7 @@ void run_GA() {
             else
                 chromosome[i] = 0;
         }
-        for (int i = candidates_nodes.size() + ceil(log2(candidates_nodes.size()));
+        for (int i = (int) candidates_nodes.size() + (int) ceil(log2(candidates_nodes.size()));
              i < candidates_nodes.size() + ceil(log2(candidates_nodes.size())) + 2; ++i) {
             if (!(rand() % 10)) {
                 chromosome[i] = 1;
@@ -542,14 +507,6 @@ void run_GA() {
 
     for (int gen = 1; gen <= number_of_generations; ++gen) {
         vector<vector<int>> new_female_population, new_male_population;
-
-        /*
-        for ( auto male : best_males )    {
-            for ( auto female : best_females )  {
-
-            }
-        }
-        */
 
         for (int k = 1; k <= 400; ++k) {
             double rand_males = ((double) rand() / (RAND_MAX));
@@ -696,8 +653,8 @@ void testcase(const string &p_in, const string &p_out) {
 signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
-    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)";
-    for (int t = 11; t <= 70; ++t) {
+    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results\grader_test)";
+    for (int t = 1; t <= 24; ++t) {
         c_start = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
