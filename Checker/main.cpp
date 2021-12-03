@@ -7,6 +7,7 @@ vector<int> sol;
 vector<int> v_t[1000001], ctc[1000001], st, v[1000001];
 int used[1000001], nrctc, n, m, nr_cc;
 vector<bool> bad(1000000, true);
+
 void dfs(int nod) {
     used[nod] = 1;
     for (int vecin : v[nod]) {
@@ -27,7 +28,7 @@ void solve() {
     int cnt = 0;
     for (int i = 1; i <= n; ++i) {
         if (!used[i] && !bad[i]) {
-            ++ cnt ;
+            ++cnt;
             dfs(i);
         }
     }
@@ -49,23 +50,23 @@ map<pair<int, int>, bool> edges;
 
 signed main() {
 
-    for (int t = 24; t <= 24; ++t) {
+    for (int t = 10; t <= 10; ++t) {
         bad.clear();
-        bad.resize(1000005,false);
+        bad.resize(1000005, false);
         cout << "test " << t << " started\n";
         string path_in =
                 R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)" +
                 to_string(t) +
                 ".in";
         string path_out =
-                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\SA-DFVSP-NNS-results\grader_test)" +
+                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)" +
                 to_string(t) +
                 ".out";
         ifstream in2(path_in);
         ifstream in(path_out);
         int x, y;
 
-        in >> n ;
+        in >> n;
         for (int i = 1; i <= n; ++i) {
             in >> x;
             bad[x] = true;
@@ -95,7 +96,6 @@ signed main() {
         st.clear();
         edges.clear();
     }
-
 
 
     return 0;
