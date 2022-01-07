@@ -5,7 +5,7 @@ using namespace std;
 set<pair<int, int>> edges;
 vector<vector<int>> ctc;
 vector<int> used, ctc_ind, st, used_pie, not_piv, individual_gene;
-int n, nr_ctc, m;
+int n, nr_ctc;
 vector<vector<int>> male_population, female_population;
 vector<int> candidates_nodes, best_female_chromosome;
 vector<set<int>> in_degree, out_degree;
@@ -36,35 +36,10 @@ void dfs(int nod) {
     st.emplace_back(nod);
 }
 
-void dfs_(int nod) {
-    used[nod] = 1;
-    for (int i : out_degree_[nod]) {
-        if (!used[i]) dfs_(i);
-    }
-    st.emplace_back(nod);
-}
-
-void dfs_individual(int nod) {
-    used[nod] = 1;
-    for (int i : out_degree_[nod]) {
-        if (!used[i] && individual_gene[i]) dfs_individual(i);
-    }
-    st.emplace_back(nod);
-}
-
 void dfs_t(int nod) {
     used[nod] = 2;
     for (int i : in_degree[nod]) {
         if (used[i] != 2 && !out_degree[nod].count(i)) dfs_t(i);
-    }
-    ctc_ind[nod] = nr_ctc;
-    ctc[nr_ctc].emplace_back(nod);
-}
-
-void dfs_t_male(int nod) {
-    used[nod] = 2;
-    for (int i : in_degree_[nod]) {
-        if (used[i] != 2 && individual_gene[i]) dfs_t_male(i);
     }
     ctc_ind[nod] = nr_ctc;
     ctc[nr_ctc].emplace_back(nod);
@@ -95,6 +70,7 @@ bool erase_SCC_edges() {
     for (auto it : to_be_erased) {
         erase_edge(it.first, it.second);
     }
+    cout << "**" << nr_ctc << ' ' << in_degree[1].size() << ' ' << out_degree[1].size() << '\n';
     return ret;
 }
 
@@ -443,17 +419,144 @@ void ad_hoc() {
         }
     }
     contract_graph();
+    cout << candidates_nodes.size() << '\n';
+    vector<double> arr(candidates_nodes.size() + 2, 0.);
+    vector<vector<double>> nums(candidates_nodes.size() + 2, vector<double>(candidates_nodes.size() + 2, 0.));
+    for (int i = 0; i < candidates_nodes.size(); ++i) {
+        for (int j = 0; j < candidates_nodes.size(); ++j) {
+            if (out_degree[candidates_nodes[i]].count(candidates_nodes[j])) {
+                nums[i][j] = 1. / (double) (out_degree[candidates_nodes[i]].size());
+            }
+            if (i == j) {
+                nums[i][j] -= 1.;
+            }
+        }
+    }
+    for (int i = 0; i <= candidates_nodes.size(); ++i) {
+        nums[candidates_nodes.size()][i] = 1.;
+    }
+    double eps = 1e-11;
+    n = candidates_nodes.size();
+    int m = n;
+    n++;
+    int i = 0, j = 0, k;
+    while (i < n && j < m) {
+        for (k = i; k < n; k++)
+            if (abs(nums[k][j]) > eps)
+                break;
+        if (k == n) {
+            j++;
+            continue;
+        }
+        if (k != i)
+            for (int l = 0; l <= m; l++)
+                swap(nums[i][l], nums[k][l]);
+        for (int l = j + 1; l <= m; l++)
+            nums[i][l] /= nums[i][j];
+        nums[i][j] = 1;
+        for (int nx = i + 1; nx < n; nx++) {
+            for (int l = j + 1; l <= m; l++)
+                nums[nx][l] -= nums[nx][j] * nums[i][l];
+            nums[nx][j] = 0;
+        }
+        i++;
+        j++;
+    }
+    for (int i = n - 1; i >= 0; i--)
+        for (int j = 0; j <= m; j++)
+            if (abs(nums[i][j]) > eps) {
+                if (j == m) {
+                    cout << "Imposibil\n";
+                    return;
+                }
+                arr[j] = nums[i][m];
+                for (k = j + 1; k < m; k++)
+                    arr[j] -= arr[k] * nums[i][k];
+                break;
+            }
+
+    vector<pair<double, int>> nodes_;
+    map<int, double> mapp;
+    for (int i = 0; i < candidates_nodes.size(); ++i) {
+        mapp[candidates_nodes[i]] = arr[i];
+    }
+    arr.clear();
+    arr.resize(candidates_nodes.size() + 2, 0.);
+    nums.clear();
+    nums.resize(candidates_nodes.size() + 2, vector<double>(candidates_nodes.size() + 2, 0.));
+    for (int i = 0; i < candidates_nodes.size(); ++i) {
+        for (int j = 0; j < candidates_nodes.size(); ++j) {
+            if (out_degree[candidates_nodes[i]].count(candidates_nodes[j])) {
+                nums[j][i] = 1. / (double) (out_degree[candidates_nodes[i]].size());
+            }
+            if (i == j) {
+                nums[i][j] -= 1.;
+            }
+        }
+    }
+    for (int i = 0; i <= candidates_nodes.size(); ++i) {
+        nums[candidates_nodes.size()][i] = 1.;
+    }
+
+    n = candidates_nodes.size();
+    m = n;
+    n++;
+    i = 0, j = 0, k;
+    while (i < n && j < m) {
+        for (k = i; k < n; k++)
+            if (abs(nums[k][j]) > eps)
+                break;
+        if (k == n) {
+            j++;
+            continue;
+        }
+        if (k != i)
+            for (int l = 0; l <= m; l++)
+                swap(nums[i][l], nums[k][l]);
+        for (int l = j + 1; l <= m; l++)
+            nums[i][l] /= nums[i][j];
+        nums[i][j] = 1;
+        for (int nx = i + 1; nx < n; nx++) {
+            for (int l = j + 1; l <= m; l++)
+                nums[nx][l] -= nums[nx][j] * nums[i][l];
+            nums[nx][j] = 0;
+        }
+        i++;
+        j++;
+    }
+    for (int i = n - 1; i >= 0; i--)
+        for (int j = 0; j <= m; j++)
+            if (abs(nums[i][j]) > eps) {
+                if (j == m) {
+                    cout << "Imposibil\n";
+                    return;
+                }
+                arr[j] = nums[i][m];
+                for (k = j + 1; k < m; k++)
+                    arr[j] -= arr[k] * nums[i][k];
+                break;
+            }
+
+
+    for (int i = 0; i < candidates_nodes.size(); ++i) {
+        nodes_.emplace_back(arr[i] + mapp[candidates_nodes[i]], candidates_nodes[i]);
+    }
+    sort(nodes_.begin(), nodes_.end());
+    for (int i = 0; i < candidates_nodes.size(); ++i) {
+        candidates_nodes[i] = nodes_[i].second;
+    }
+
     int counter = 0;
     while (!candidates_nodes.empty()) {
         ++counter;
         loop();
         if (candidates_nodes.empty()) continue;
-        for (auto it : candidates_nodes) {
-            priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
-                             0.3 * abs((double) in_degree[it].size() - out_degree[it].size()));
-        }
-        sort(candidates_nodes.begin(), candidates_nodes.end(),
-             [](int a, int b) { return priority[a] > priority[b]; });
+        // for (auto it : candidates_nodes) {
+        //     priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
+        // 0.3 * abs((double) in_degree[it].size() - out_degree[it].size()));
+        //  }
+        //   sort(candidates_nodes.begin(), candidates_nodes.end(),
+        //     [](int a, int b) { return priority[a] > priority[b]; });
 
         int node = candidates_nodes.back();
         candidates_nodes.pop_back();
@@ -474,6 +577,7 @@ void testcase(const string &p_in, const string &p_out) {
     ifstream in(p_in);
     ofstream out(p_out);
     int x, y;
+    int m;
     in >> n >> m;
     set_size();
     for (int i = 1; i <= m; ++i) {
@@ -483,6 +587,7 @@ void testcase(const string &p_in, const string &p_out) {
     ad_hoc();
 
     out << feedback_vertex_set.size() << '\n';
+    cout << "***--->" << feedback_vertex_set.size() << '\n';
     for (auto it : feedback_vertex_set) out << it << ' ';
     out << '\n';
 
@@ -496,7 +601,7 @@ signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)";
-    for (int t = 10; t <= 10; ++t) {
+    for (int t = 7; t <= 7; ++t) {
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
         cout << "test " << t << " finished\n";
