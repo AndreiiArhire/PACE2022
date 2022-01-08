@@ -420,143 +420,137 @@ void ad_hoc() {
     }
     contract_graph();
     cout << candidates_nodes.size() << '\n';
-    vector<double> arr(candidates_nodes.size() + 2, 0.);
-    vector<vector<double>> nums(candidates_nodes.size() + 2, vector<double>(candidates_nodes.size() + 2, 0.));
-    for (int i = 0; i < candidates_nodes.size(); ++i) {
-        for (int j = 0; j < candidates_nodes.size(); ++j) {
-            if (out_degree[candidates_nodes[i]].count(candidates_nodes[j])) {
-                nums[i][j] = 1. / (double) (out_degree[candidates_nodes[i]].size());
-            }
-            if (i == j) {
-                nums[i][j] -= 1.;
-            }
-        }
-    }
-    for (int i = 0; i <= candidates_nodes.size(); ++i) {
-        nums[candidates_nodes.size()][i] = 1.;
-    }
-    double eps = 1e-11;
-    n = candidates_nodes.size();
-    int m = n;
-    n++;
-    int i = 0, j = 0, k;
-    while (i < n && j < m) {
-        for (k = i; k < n; k++)
-            if (abs(nums[k][j]) > eps)
-                break;
-        if (k == n) {
-            j++;
-            continue;
-        }
-        if (k != i)
-            for (int l = 0; l <= m; l++)
-                swap(nums[i][l], nums[k][l]);
-        for (int l = j + 1; l <= m; l++)
-            nums[i][l] /= nums[i][j];
-        nums[i][j] = 1;
-        for (int nx = i + 1; nx < n; nx++) {
-            for (int l = j + 1; l <= m; l++)
-                nums[nx][l] -= nums[nx][j] * nums[i][l];
-            nums[nx][j] = 0;
-        }
-        i++;
-        j++;
-    }
-    for (int i = n - 1; i >= 0; i--)
-        for (int j = 0; j <= m; j++)
-            if (abs(nums[i][j]) > eps) {
-                if (j == m) {
-                    cout << "Imposibil\n";
-                    return;
-                }
-                arr[j] = nums[i][m];
-                for (k = j + 1; k < m; k++)
-                    arr[j] -= arr[k] * nums[i][k];
-                break;
-            }
-
-    vector<pair<double, int>> nodes_;
-    map<int, double> mapp;
-    for (int i = 0; i < candidates_nodes.size(); ++i) {
-        mapp[candidates_nodes[i]] = arr[i];
-    }
-    arr.clear();
-    arr.resize(candidates_nodes.size() + 2, 0.);
-    nums.clear();
-    nums.resize(candidates_nodes.size() + 2, vector<double>(candidates_nodes.size() + 2, 0.));
-    for (int i = 0; i < candidates_nodes.size(); ++i) {
-        for (int j = 0; j < candidates_nodes.size(); ++j) {
-            if (out_degree[candidates_nodes[i]].count(candidates_nodes[j])) {
-                nums[j][i] = 1. / (double) (out_degree[candidates_nodes[i]].size());
-            }
-            if (i == j) {
-                nums[i][j] -= 1.;
-            }
-        }
-    }
-    for (int i = 0; i <= candidates_nodes.size(); ++i) {
-        nums[candidates_nodes.size()][i] = 1.;
-    }
-
-    n = candidates_nodes.size();
-    m = n;
-    n++;
-    i = 0, j = 0, k;
-    while (i < n && j < m) {
-        for (k = i; k < n; k++)
-            if (abs(nums[k][j]) > eps)
-                break;
-        if (k == n) {
-            j++;
-            continue;
-        }
-        if (k != i)
-            for (int l = 0; l <= m; l++)
-                swap(nums[i][l], nums[k][l]);
-        for (int l = j + 1; l <= m; l++)
-            nums[i][l] /= nums[i][j];
-        nums[i][j] = 1;
-        for (int nx = i + 1; nx < n; nx++) {
-            for (int l = j + 1; l <= m; l++)
-                nums[nx][l] -= nums[nx][j] * nums[i][l];
-            nums[nx][j] = 0;
-        }
-        i++;
-        j++;
-    }
-    for (int i = n - 1; i >= 0; i--)
-        for (int j = 0; j <= m; j++)
-            if (abs(nums[i][j]) > eps) {
-                if (j == m) {
-                    cout << "Imposibil\n";
-                    return;
-                }
-                arr[j] = nums[i][m];
-                for (k = j + 1; k < m; k++)
-                    arr[j] -= arr[k] * nums[i][k];
-                break;
-            }
-
-
-    for (int i = 0; i < candidates_nodes.size(); ++i) {
-        nodes_.emplace_back(arr[i] + mapp[candidates_nodes[i]], candidates_nodes[i]);
-    }
-    sort(nodes_.begin(), nodes_.end());
-    for (int i = 0; i < candidates_nodes.size(); ++i) {
-        candidates_nodes[i] = nodes_[i].second;
-    }
 
     int counter = 0;
     while (!candidates_nodes.empty()) {
         ++counter;
         loop();
         if (candidates_nodes.empty()) continue;
-        // for (auto it : candidates_nodes) {
-        //     priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
-        // 0.3 * abs((double) in_degree[it].size() - out_degree[it].size()));
-        //  }
-        //   sort(candidates_nodes.begin(), candidates_nodes.end(),
-        //     [](int a, int b) { return priority[a] > priority[b]; });
+        vector<double> arr(candidates_nodes.size() + 2, 0.);
+        vector<vector<double>> nums(candidates_nodes.size() + 2, vector<double>(candidates_nodes.size() + 2, 0.));
+        for (int i = 0; i < candidates_nodes.size(); ++i) {
+            for (int j = 0; j < candidates_nodes.size(); ++j) {
+                if (out_degree[candidates_nodes[i]].count(candidates_nodes[j])) {
+                    nums[i][j] = 1. / (double) (out_degree[candidates_nodes[i]].size());
+                }
+                if (i == j) {
+                    nums[i][j] -= 1.;
+                }
+            }
+        }
+        for (int i = 0; i <= candidates_nodes.size(); ++i) {
+            nums[candidates_nodes.size()][i] = 1.;
+        }
+        double eps = 1e-11;
+        n = candidates_nodes.size();
+        int m = n;
+        n++;
+        int i = 0, j = 0, k;
+        while (i < n && j < m) {
+            for (k = i; k < n; k++)
+                if (abs(nums[k][j]) > eps)
+                    break;
+            if (k == n) {
+                j++;
+                continue;
+            }
+            if (k != i)
+                for (int l = 0; l <= m; l++)
+                    swap(nums[i][l], nums[k][l]);
+            for (int l = j + 1; l <= m; l++)
+                nums[i][l] /= nums[i][j];
+            nums[i][j] = 1;
+            for (int nx = i + 1; nx < n; nx++) {
+                for (int l = j + 1; l <= m; l++)
+                    nums[nx][l] -= nums[nx][j] * nums[i][l];
+                nums[nx][j] = 0;
+            }
+            i++;
+            j++;
+        }
+        for (int i = n - 1; i >= 0; i--)
+            for (int j = 0; j <= m; j++)
+                if (abs(nums[i][j]) > eps) {
+                    if (j == m) {
+                        cout << "Imposibil\n";
+                        return;
+                    }
+                    arr[j] = nums[i][m];
+                    for (k = j + 1; k < m; k++)
+                        arr[j] -= arr[k] * nums[i][k];
+                    break;
+                }
+
+        vector<pair<double, int>> nodes_;
+        map<int, double> mapp;
+        for (int i = 0; i < candidates_nodes.size(); ++i) {
+            mapp[candidates_nodes[i]] = arr[i];
+        }
+        arr.clear();
+        arr.resize(candidates_nodes.size() + 2, 0.);
+        nums.clear();
+        nums.resize(candidates_nodes.size() + 2, vector<double>(candidates_nodes.size() + 2, 0.));
+        for (int i = 0; i < candidates_nodes.size(); ++i) {
+            for (int j = 0; j < candidates_nodes.size(); ++j) {
+                if (out_degree[candidates_nodes[i]].count(candidates_nodes[j])) {
+                    nums[j][i] = 1. / (double) (out_degree[candidates_nodes[i]].size());
+                }
+                if (i == j) {
+                    nums[i][j] -= 1.;
+                }
+            }
+        }
+        for (int i = 0; i <= candidates_nodes.size(); ++i) {
+            nums[candidates_nodes.size()][i] = 1.;
+        }
+
+        n = candidates_nodes.size();
+        m = n;
+        n++;
+        i = 0, j = 0, k;
+        while (i < n && j < m) {
+            for (k = i; k < n; k++)
+                if (abs(nums[k][j]) > eps)
+                    break;
+            if (k == n) {
+                j++;
+                continue;
+            }
+            if (k != i)
+                for (int l = 0; l <= m; l++)
+                    swap(nums[i][l], nums[k][l]);
+            for (int l = j + 1; l <= m; l++)
+                nums[i][l] /= nums[i][j];
+            nums[i][j] = 1;
+            for (int nx = i + 1; nx < n; nx++) {
+                for (int l = j + 1; l <= m; l++)
+                    nums[nx][l] -= nums[nx][j] * nums[i][l];
+                nums[nx][j] = 0;
+            }
+            i++;
+            j++;
+        }
+        for (int i = n - 1; i >= 0; i--)
+            for (int j = 0; j <= m; j++)
+                if (abs(nums[i][j]) > eps) {
+                    if (j == m) {
+                        cout << "Imposibil\n";
+                        return;
+                    }
+                    arr[j] = nums[i][m];
+                    for (k = j + 1; k < m; k++)
+                        arr[j] -= arr[k] * nums[i][k];
+                    break;
+                }
+
+
+        for (int i = 0; i < candidates_nodes.size(); ++i) {
+            nodes_.emplace_back(arr[i] + mapp[candidates_nodes[i]], candidates_nodes[i]);
+        }
+        sort(nodes_.begin(), nodes_.end());
+        for (int i = 0; i < candidates_nodes.size(); ++i) {
+            candidates_nodes[i] = nodes_[i].second;
+        }
 
         int node = candidates_nodes.back();
         candidates_nodes.pop_back();
@@ -569,7 +563,6 @@ void ad_hoc() {
             cout << candidates_nodes.size() << '\n';
         }
     }
-
 }
 
 
@@ -600,8 +593,8 @@ void testcase(const string &p_in, const string &p_out) {
 signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
-    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)";
-    for (int t = 3; t <= 3; ++t) {
+    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\markov-results\grader_test)";
+    for (int t = 5; t <= 5; ++t) {
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
         cout << "test " << t << " finished\n";

@@ -419,6 +419,7 @@ void ad_hoc() {
         }
     }
     contract_graph();
+    /*
     cout << candidates_nodes.size() << '\n';
     vector<double> arr(candidates_nodes.size() + 2, 0.);
     vector<vector<double>> nums(candidates_nodes.size() + 2, vector<double>(candidates_nodes.size() + 2, 0.));
@@ -545,18 +546,17 @@ void ad_hoc() {
     for (int i = 0; i < candidates_nodes.size(); ++i) {
         candidates_nodes[i] = nodes_[i].second;
     }
-
+    */
     int counter = 0;
     while (!candidates_nodes.empty()) {
         ++counter;
         loop();
         if (candidates_nodes.empty()) continue;
-        // for (auto it : candidates_nodes) {
-        //     priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
-        // 0.3 * abs((double) in_degree[it].size() - out_degree[it].size()));
-        //  }
-        //   sort(candidates_nodes.begin(), candidates_nodes.end(),
-        //     [](int a, int b) { return priority[a] > priority[b]; });
+        for (auto it : candidates_nodes) {
+            priority[it] = -in_degree[it].size() * out_degree[it].size();
+        }
+        sort(candidates_nodes.begin(), candidates_nodes.end(),
+             [](int a, int b) { return priority[a] > priority[b]; });
 
         int node = candidates_nodes.back();
         candidates_nodes.pop_back();
@@ -601,7 +601,7 @@ signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)";
-    for (int t = 7; t <= 7; ++t) {
+    for (int t = 1; t <= 70; ++t) {
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
         cout << "test " << t << " finished\n";

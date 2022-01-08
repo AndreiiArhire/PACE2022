@@ -9,10 +9,11 @@ int n, nr_ctc, m;
 vector<vector<int>> male_population, female_population;
 vector<int> candidates_nodes, best_female_chromosome;
 vector<set<int>> in_degree, out_degree;
-vector<vector<int>> in_degree_, out_degree_;
-set<int> feedback_vertex_set;
+set<int> feedback_vertex_set, fvs;
+vector<int> feedback_vertex_set_vector, feedback_vertex_set_vector2;
 vector<double> phi_males, phi_females, probability_males, probability_females;
 vector<double> priority;
+clock_t begin_;
 
 void add_edge(int x, int y) {
     /*O(lgN)*/
@@ -36,22 +37,6 @@ void dfs(int nod) {
     st.emplace_back(nod);
 }
 
-void dfs_(int nod) {
-    used[nod] = 1;
-    for (int i : out_degree_[nod]) {
-        if (!used[i]) dfs_(i);
-    }
-    st.emplace_back(nod);
-}
-
-void dfs_individual(int nod) {
-    used[nod] = 1;
-    for (int i : out_degree_[nod]) {
-        if (!used[i] && individual_gene[i]) dfs_individual(i);
-    }
-    st.emplace_back(nod);
-}
-
 void dfs_t(int nod) {
     used[nod] = 2;
     for (int i : in_degree[nod]) {
@@ -61,14 +46,6 @@ void dfs_t(int nod) {
     ctc[nr_ctc].emplace_back(nod);
 }
 
-void dfs_t_male(int nod) {
-    used[nod] = 2;
-    for (int i : in_degree_[nod]) {
-        if (used[i] != 2 && individual_gene[i]) dfs_t_male(i);
-    }
-    ctc_ind[nod] = nr_ctc;
-    ctc[nr_ctc].emplace_back(nod);
-}
 
 bool erase_SCC_edges() {
     /*O((N+M)lgN)*/
@@ -110,74 +87,8 @@ void erase_node(int node) {
         erase_edge(it.first, it.second);
     }
     feedback_vertex_set.insert(node);
+    feedback_vertex_set_vector.emplace_back(node);
 }
-
-bool erase_self_loop_node(int i) {
-    if (!edges.count(make_pair(i, i))) {
-        return false;
-    }
-    vector<pair<int, int>> to_be_erased;
-    feedback_vertex_set.insert(i);
-    for (auto it : in_degree[i]) {
-        to_be_erased.emplace_back(it, i);
-    }
-    for (auto it : out_degree[i]) {
-        to_be_erased.emplace_back(i, it);
-    }
-    for (auto it : to_be_erased) {
-        erase_edge(it.first, it.second);
-    }
-    return true;
-}
-
-bool erase_0in_out_degree_node(int i) {
-    if (!in_degree[i].empty() && !out_degree[i].empty()) {
-        return false;
-    }
-    vector<pair<int, int>> to_be_erased;
-    for (auto it : in_degree[i]) {
-        to_be_erased.emplace_back(it, i);
-    }
-    for (auto it : out_degree[i]) {
-        to_be_erased.emplace_back(i, it);
-    }
-    for (auto it : to_be_erased) {
-        erase_edge(it.first, it.second);
-    }
-    return true;
-}
-
-bool erase_1in_out_degree_node(int i) {
-    if ((in_degree[i].size() != 1 && out_degree[i].size() != 1) || edges.count(make_pair(i, i))) {
-        return false;
-    }
-    vector<pair<int, int>> to_be_erased;
-    if (in_degree[i].size() == 1) {
-        int node = *in_degree[i].begin();
-        to_be_erased.emplace_back(node, i);
-        for (auto it : out_degree[i]) {
-            to_be_erased.emplace_back(i, it);
-        }
-        for (auto it : out_degree[i]) {
-            add_edge(node, it);
-        }
-    }
-    if (out_degree[i].size() == 1) {
-        int node = *out_degree[i].begin();
-        to_be_erased.emplace_back(i, node);
-        for (auto it : in_degree[i]) {
-            to_be_erased.emplace_back(it, i);
-        }
-        for (auto it : in_degree[i]) {
-            add_edge(it, node);
-        }
-    }
-    for (auto it : to_be_erased) {
-        erase_edge(it.first, it.second);
-    }
-    return true;
-}
-
 
 bool erase_self_loop_nodes() {
     /*O((N+M)lgN)*/
@@ -190,6 +101,7 @@ bool erase_self_loop_nodes() {
         }
         vector<pair<int, int>> to_be_erased;
         feedback_vertex_set.insert(i);
+        feedback_vertex_set_vector.emplace_back(i);
         for (auto it : in_degree[i]) {
             to_be_erased.emplace_back(it, i);
         }
@@ -307,6 +219,7 @@ bool erase_CORE_nodes() {
         if (is_core == 1) {
             for (auto it2 : clique) {
                 feedback_vertex_set.insert(it2);
+                feedback_vertex_set_vector.emplace_back(it2);
                 for (auto it3 : in_degree[it2]) {
                     to_be_erased.emplace_back(it3, it2);
                 }
@@ -315,6 +228,7 @@ bool erase_CORE_nodes() {
                 }
             }
             feedback_vertex_set.erase(it);
+            feedback_vertex_set_vector.emplace_back(it);
         }
         for (auto it2 : to_be_erased) {
             erase_edge(it2.first, it2.second);
@@ -392,9 +306,7 @@ void set_size() {
     individual_gene.resize(n + 1, 0);
     ctc.resize(n + 1, vector<int>());
     in_degree.resize(n + 1, set<int>());
-    in_degree_.resize(n + 1, vector<int>());
     out_degree.resize(n + 1, set<int>());
-    out_degree_.resize(n + 1, vector<int>());
     used.resize(n + 1, 0);
     not_piv.resize(n + 1, 0);
     used_pie.resize(n + 1, 0);
@@ -423,10 +335,9 @@ void clear_sets() {
     nr_ctc = 0;
     candidates_nodes.clear();
     in_degree.clear();
-    in_degree_.clear();
     out_degree.clear();
-    out_degree_.clear();
     feedback_vertex_set.clear();
+    feedback_vertex_set_vector.clear();
     not_piv.clear();
 }
 
@@ -434,34 +345,30 @@ void ad_hoc() {
     for (int i = 1; i <= n; ++i) {
         candidates_nodes.emplace_back(i);
     }
-    for (auto it : candidates_nodes) {
-        for (auto it2 : in_degree[it]) {
-            in_degree_[it].emplace_back(it2);
-        }
-        for (auto it2 : out_degree[it]) {
-            out_degree_[it].emplace_back(it2);
-        }
-    }
     contract_graph();
     int counter = 0;
     while (!candidates_nodes.empty()) {
-        ++counter;
         loop();
         if (candidates_nodes.empty()) continue;
+        for (auto it : candidates_nodes) {
+            priority[it] = -(in_degree[it].size() * out_degree[it].size());
+        }
+        /*
         for (auto it : candidates_nodes) {
             priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
                              0.3 * abs((double) in_degree[it].size() - out_degree[it].size()));
         }
+        */
         sort(candidates_nodes.begin(), candidates_nodes.end(),
              [](int a, int b) { return priority[a] > priority[b]; });
+        int node;
+        for (int i = 1; i <= 1 + candidates_nodes.size() / 10000; ++i) {
+            node = candidates_nodes.back();
+            candidates_nodes.pop_back();
+            erase_node(node);
+            ++counter;
+        }
 
-        int node = candidates_nodes.back();
-        candidates_nodes.pop_back();
-
-        //if (erase_self_loop_node(node)) continue;
-        //if (erase_0in_out_degree_node(node)) continue;
-        //if (erase_1in_out_degree_node(node)) continue;
-        erase_node(node);
         if (counter % 100 == 0) {
             cout << candidates_nodes.size() << '\n';
         }
@@ -469,6 +376,93 @@ void ad_hoc() {
 
 }
 
+
+vector<int> sol_;
+vector<int> v_t_[1000001], ctc_[1000001], st_, v_[1000001];
+int used_[1000001], nrctc_;
+vector<int> bad_;
+
+
+void dfs_(int nod) {
+    used_[nod] = 1;
+    for (int vecin : v_[nod]) {
+        if (!used_[vecin] && !bad_[vecin]) dfs_(vecin);
+    }
+    st_.emplace_back(nod);
+}
+
+void dfs_t_(int nod) {
+    used_[nod] = 2;
+    for (int vecin : v_t_[nod]) {
+        if (used_[vecin] != 2 && !bad_[vecin]) dfs_t_(vecin);
+    }
+    ctc_[nrctc_].emplace_back(nod);
+}
+
+int solve_() {
+    int cnt = 0;
+    for (int i = 1; i <= n; ++i) {
+        if (!used_[i] && !bad_[i]) {
+            ++cnt;
+            dfs_(i);
+        }
+    }
+    while (!st_.empty()) {
+        int nod = st_.back();
+        if (used_[nod] != 2 && !bad_[nod]) dfs_t_(nod), ++nrctc_;
+        st_.pop_back();
+    }
+    for (int i = 0; i < nrctc_; ++i) {
+        if (ctc_[i].size() != 1) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+void try_to() {
+    for (int i = 1; i <= n; ++i) {
+        candidates_nodes.emplace_back(i);
+    }
+    contract_graph();
+    vector<int> ap(n + 2, 0);
+    for (auto it : fvs) {
+        ap[it] = 1;
+        erase_node(it);
+    }
+    vector<int> c2;
+    for (auto it : candidates_nodes) {
+        if (!ap[it]) {
+            c2.emplace_back(it);
+        }
+    }
+    candidates_nodes = c2;
+    for (int ii = (int) feedback_vertex_set_vector2.size() - 1; ii >= 0; --ii) {
+        auto it2 = feedback_vertex_set_vector2[ii];
+        bad_.clear();
+        bad_.resize(n + 5, false);
+        for (auto it : fvs) {
+            bad_[it] = true;
+        }
+        bad_[it2] = false;
+        if (solve_()) {
+            fvs.erase(it2);
+        }
+        sol_.clear();
+        for (int i = 0; i <= n; ++i) {
+            ctc_[i].clear();
+            used_[i] = false;
+        }
+        nrctc_ = 0;
+        st.clear();
+        clock_t end_ = clock();
+        double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
+        if (elapsed_secs >= 600 - 5) {
+            break;
+        }
+    }
+}
 
 void testcase(const string &p_in, const string &p_out) {
     ifstream in(p_in);
@@ -481,14 +475,36 @@ void testcase(const string &p_in, const string &p_out) {
         add_edge(x, y);
     }
     ad_hoc();
-
-    out << feedback_vertex_set.size() << '\n';
-    for (auto it : feedback_vertex_set) out << it << ' ';
-    out << '\n';
-
+    fvs = feedback_vertex_set;
+    feedback_vertex_set_vector2 = feedback_vertex_set_vector;
+    cout << "--->" << feedback_vertex_set.size() << '\n';
     clear_sets();
     out.close();
     in.close();
+    ifstream in2(p_in);
+    ofstream out2(p_out);
+    in2 >> n >> m;
+    set_size();
+    for (int i = 1; i <= m; ++i) {
+        in2 >> x >> y;
+        v_[x].push_back(y);
+        v_t_[y].push_back(x);
+        add_edge(x, y);
+    }
+    try_to();
+    cout << "--->" << fvs.size() << '\n';
+    out2 << fvs.size() << '\n';
+    for (auto it : fvs) out2 << it << ' ';
+    out2 << '\n';
+    fvs.clear();
+    feedback_vertex_set_vector2.clear();
+    clear_sets();
+    out2.close();
+    in2.close();
+    for (int i = 0; i <= n; ++i) {
+        v_[i].clear();
+        v_t_[i].clear();
+    }
 }
 
 
@@ -496,10 +512,14 @@ signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
-    for (int t = 7; t <= 7; ++t) {
+    for (int t = 1; t <= 70; ++t) {
+        begin_ = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
         cout << "test " << t << " finished\n";
+        clock_t end_ = clock();
+        double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
+        cout << "time elapsed in seconds: " << elapsed_secs << '\n';
     }
 
     return 0;

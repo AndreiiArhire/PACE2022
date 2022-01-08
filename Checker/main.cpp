@@ -1,11 +1,10 @@
 #include <bits/stdc++.h>
 
 using namespace std;
-const int tescases = 5;
-vector<int> sol;
 
+vector<int> sol;
 vector<int> v_t[1000001], ctc[1000001], st, v[1000001];
-int used[1000001], nrctc, n, m, nr_cc;
+int used[1000001], nrctc, n, m;
 vector<bool> bad(1000000, true);
 
 void dfs(int nod) {
@@ -45,12 +44,9 @@ void solve() {
     }
 }
 
-
-map<pair<int, int>, bool> edges;
-
 signed main() {
 
-    for (int t = 10; t <= 10; ++t) {
+    for (int t = 1; t <= 32; ++t) {
         bad.clear();
         bad.resize(1000005, false);
         cout << "test " << t << " started\n";
@@ -59,7 +55,7 @@ signed main() {
                 to_string(t) +
                 ".in";
         string path_out =
-                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)" +
+                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" +
                 to_string(t) +
                 ".out";
         ifstream in2(path_in);
@@ -78,7 +74,6 @@ signed main() {
             if (used[x] || used[y]) continue;
             v[x].push_back(y);
             v_t[y].push_back(x);
-            edges[make_pair(x, y)] = true;
         }
 
         solve();
@@ -94,7 +89,6 @@ signed main() {
         }
         nrctc = 0;
         st.clear();
-        edges.clear();
     }
 
 
