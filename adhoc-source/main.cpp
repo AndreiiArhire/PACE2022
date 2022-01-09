@@ -9,8 +9,7 @@ int n, nr_ctc, m;
 vector<vector<int>> male_population, female_population;
 vector<int> candidates_nodes, best_female_chromosome;
 vector<set<int>> in_degree, out_degree;
-set<int> feedback_vertex_set, fvs;
-vector<int> feedback_vertex_set_vector, feedback_vertex_set_vector2;
+set<int> feedback_vertex_set, fvs, best_fvs;
 vector<double> phi_males, phi_females, probability_males, probability_females;
 vector<double> priority;
 clock_t begin_;
@@ -87,7 +86,6 @@ void erase_node(int node) {
         erase_edge(it.first, it.second);
     }
     feedback_vertex_set.insert(node);
-    feedback_vertex_set_vector.emplace_back(node);
 }
 
 bool erase_self_loop_nodes() {
@@ -101,7 +99,6 @@ bool erase_self_loop_nodes() {
         }
         vector<pair<int, int>> to_be_erased;
         feedback_vertex_set.insert(i);
-        feedback_vertex_set_vector.emplace_back(i);
         for (auto it : in_degree[i]) {
             to_be_erased.emplace_back(it, i);
         }
@@ -219,7 +216,6 @@ bool erase_CORE_nodes() {
         if (is_core == 1) {
             for (auto it2 : clique) {
                 feedback_vertex_set.insert(it2);
-                feedback_vertex_set_vector.emplace_back(it2);
                 for (auto it3 : in_degree[it2]) {
                     to_be_erased.emplace_back(it3, it2);
                 }
@@ -228,7 +224,6 @@ bool erase_CORE_nodes() {
                 }
             }
             feedback_vertex_set.erase(it);
-            feedback_vertex_set_vector.emplace_back(it);
         }
         for (auto it2 : to_be_erased) {
             erase_edge(it2.first, it2.second);
@@ -337,17 +332,23 @@ void clear_sets() {
     in_degree.clear();
     out_degree.clear();
     feedback_vertex_set.clear();
-    feedback_vertex_set_vector.clear();
     not_piv.clear();
 }
 
 void ad_hoc() {
-    for (int i = 1; i <= n; ++i) {
-        candidates_nodes.emplace_back(i);
-    }
     contract_graph();
     int counter = 0;
     while (!candidates_nodes.empty()) {
+        clock_t end_ = clock();
+        double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
+        if (elapsed_secs >= 600 - 5) {
+            /*abort mision*/
+            cout << "ad_hoc stopped!\n";
+            for (int i = 1; i <= n; ++i) {
+                feedback_vertex_set.insert(i);
+            }
+            break;
+        }
         loop();
         if (candidates_nodes.empty()) continue;
         for (auto it : candidates_nodes) {
@@ -381,6 +382,8 @@ vector<int> sol_;
 vector<int> v_t_[1000001], ctc_[1000001], st_, v_[1000001];
 int used_[1000001], nrctc_;
 vector<int> bad_;
+int init_n, init_m;
+vector<pair<int, int>> curr_edges;
 
 
 void dfs_(int nod) {
@@ -422,6 +425,11 @@ int solve_() {
 
 
 void try_to() {
+    clock_t end_ = clock();
+    double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
+    if (elapsed_secs >= 600 - 5) {
+        return;
+    }
     for (int i = 1; i <= n; ++i) {
         candidates_nodes.emplace_back(i);
     }
@@ -438,8 +446,14 @@ void try_to() {
         }
     }
     candidates_nodes = c2;
-    for (int ii = (int) feedback_vertex_set_vector2.size() - 1; ii >= 0; --ii) {
-        auto it2 = feedback_vertex_set_vector2[ii];
+    vector<int> fvs_vector;
+    for (auto it : fvs) {
+        fvs_vector.emplace_back(it);
+    }
+    sort(candidates_nodes.begin(), candidates_nodes.end(),
+         [](int a, int b) { return priority[a] > priority[b]; });
+    for (int ii = (int) fvs_vector.size() - 1; ii >= 0; --ii) {
+        auto it2 = fvs_vector[ii];
         bad_.clear();
         bad_.resize(n + 5, false);
         for (auto it : fvs) {
@@ -464,47 +478,96 @@ void try_to() {
     }
 }
 
-void testcase(const string &p_in, const string &p_out) {
-    ifstream in(p_in);
-    ofstream out(p_out);
-    int x, y;
-    in >> n >> m;
-    set_size();
-    for (int i = 1; i <= m; ++i) {
-        in >> x >> y;
-        add_edge(x, y);
-    }
+void find_fvs() {
     ad_hoc();
     fvs = feedback_vertex_set;
-    feedback_vertex_set_vector2 = feedback_vertex_set_vector;
-    cout << "--->" << feedback_vertex_set.size() << '\n';
     clear_sets();
-    out.close();
-    in.close();
-    ifstream in2(p_in);
-    ofstream out2(p_out);
-    in2 >> n >> m;
+    n = init_n;
+    m = init_m;
     set_size();
-    for (int i = 1; i <= m; ++i) {
-        in2 >> x >> y;
+    int x, y;
+    for (auto it : curr_edges) {
+        x = it.first;
+        y = it.second;
         v_[x].push_back(y);
         v_t_[y].push_back(x);
         add_edge(x, y);
     }
     try_to();
-    cout << "--->" << fvs.size() << '\n';
-    out2 << fvs.size() << '\n';
-    for (auto it : fvs) out2 << it << ' ';
-    out2 << '\n';
+    if (best_fvs.empty() || best_fvs.size() > fvs.size()) {
+        best_fvs = fvs;
+    }
     fvs.clear();
-    feedback_vertex_set_vector2.clear();
     clear_sets();
-    out2.close();
-    in2.close();
     for (int i = 0; i <= n; ++i) {
         v_[i].clear();
         v_t_[i].clear();
     }
+}
+
+void testcase(const string &p_in, const string &p_out) {
+    ifstream in(p_in);
+    ofstream out(p_out);
+    int x, y;
+    in >> init_n >> init_m;
+    n = init_n;
+    m = init_m;
+    set_size();
+    for (int i = 1; i <= m; ++i) {
+        in >> x >> y;
+        add_edge(x, y);
+        curr_edges.emplace_back(x, y);
+    }
+    for (int i = 1; i <= n; ++i) {
+        candidates_nodes.emplace_back(i);
+    }
+    find_fvs();
+
+    for (int i = 1;; ++i) {
+        clock_t end_ = clock();
+        double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
+        if (elapsed_secs >= 600 - 5) {
+            break;
+        }
+        cout << "iter no -> " << i << '\n';
+        n = init_n;
+        m = init_m;
+        set_size();
+        for (auto it : curr_edges) {
+            x = it.first;
+            y = it.second;
+            v_[x].push_back(y);
+            v_t_[y].push_back(x);
+            add_edge(x, y);
+        }
+        vector<int> curr_fvs;
+        for (auto it : best_fvs) {
+            curr_fvs.emplace_back(it);
+        }
+        unsigned num = chrono::system_clock::now().time_since_epoch().count();
+        shuffle(curr_fvs.begin(), curr_fvs.end(), default_random_engine(num));
+        vector<int> ap(n + 2, 0);
+        int sz = (int) curr_fvs.size() / 2;
+        for (int j = 0; j < sz; ++j) {
+            ap[curr_fvs[j]] = 1;
+            erase_node(curr_fvs[j]);
+        }
+        for (int j = 1; j <= n; ++j) {
+            if (!ap[j]) {
+                candidates_nodes.emplace_back(j);
+            }
+        }
+        find_fvs();
+    }
+
+    cout << best_fvs.size() << '\n';
+    out << best_fvs.size() << '\n';
+    for (auto it : best_fvs) out << it << ' ';
+    out << '\n';
+    curr_edges.clear();
+    best_fvs.clear();
+    in.close();
+    out.close();
 }
 
 
@@ -512,7 +575,7 @@ signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
-    for (int t = 1; t <= 70; ++t) {
+    for (int t = 10; t <= 10; ++t) {
         begin_ = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
