@@ -575,7 +575,7 @@ signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
-    for (int t = 10; t <= 10; ++t) {
+    for (int t = 66; t <= 70; ++t) {
         begin_ = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
