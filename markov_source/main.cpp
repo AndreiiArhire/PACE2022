@@ -4,16 +4,14 @@ using namespace std;
 
 set<pair<int, int>> edges;
 vector<vector<int>> ctc;
-vector<int> used, ctc_ind, st, used_pie, not_piv, individual_gene;
-int n, nr_ctc, m;
-vector<vector<int>> male_population, female_population;
-vector<int> candidates_nodes, best_female_chromosome;
+vector<int> used, ctc_ind, st, not_piv;
+int n, nr_ctc, m, used_[1000001], nrctc_;
+vector<int> candidates_nodes, sol_, bad_;
 vector<set<int>> in_degree, out_degree;
 set<int> feedback_vertex_set, fvs;
-vector<int> feedback_vertex_set_vector, feedback_vertex_set_vector2;
-vector<double> phi_males, phi_females, probability_males, probability_females;
 vector<double> priority;
 clock_t begin_;
+vector<int> v_t_[1000001], ctc_[1000001], st_, v_[1000001];
 
 void add_edge(int x, int y) {
     /*O(lgN)*/
@@ -87,7 +85,6 @@ void erase_node(int node) {
         erase_edge(it.first, it.second);
     }
     feedback_vertex_set.insert(node);
-    feedback_vertex_set_vector.emplace_back(node);
 }
 
 bool erase_self_loop_nodes() {
@@ -101,7 +98,6 @@ bool erase_self_loop_nodes() {
         }
         vector<pair<int, int>> to_be_erased;
         feedback_vertex_set.insert(i);
-        feedback_vertex_set_vector.emplace_back(i);
         for (auto it : in_degree[i]) {
             to_be_erased.emplace_back(it, i);
         }
@@ -219,7 +215,6 @@ bool erase_CORE_nodes() {
         if (is_core == 1) {
             for (auto it2 : clique) {
                 feedback_vertex_set.insert(it2);
-                feedback_vertex_set_vector.emplace_back(it2);
                 for (auto it3 : in_degree[it2]) {
                     to_be_erased.emplace_back(it3, it2);
                 }
@@ -228,7 +223,6 @@ bool erase_CORE_nodes() {
                 }
             }
             feedback_vertex_set.erase(it);
-            feedback_vertex_set_vector.emplace_back(it);
         }
         for (auto it2 : to_be_erased) {
             erase_edge(it2.first, it2.second);
@@ -303,31 +297,20 @@ void set_size() {
     /*O(N*lgN)*/
     nr_ctc = 0;
     priority.resize(n + 1);
-    individual_gene.resize(n + 1, 0);
     ctc.resize(n + 1, vector<int>());
     in_degree.resize(n + 1, set<int>());
     out_degree.resize(n + 1, set<int>());
     used.resize(n + 1, 0);
     not_piv.resize(n + 1, 0);
-    used_pie.resize(n + 1, 0);
     ctc_ind.resize(n + 1);
 }
 
 void clear_sets() {
     /*O(N*lgN)*/
     priority.clear();
-    phi_females.clear();
-    phi_males.clear();
-    probability_females.clear();
-    probability_males.clear();
-    best_female_chromosome.clear();
-    individual_gene.clear();
-    male_population.clear();
-    female_population.clear();
     edges.clear();
     ctc.clear();
     used.clear();
-    used_pie.clear();
     ctc_ind.clear();
     in_degree.clear();
     out_degree.clear();
@@ -337,17 +320,26 @@ void clear_sets() {
     in_degree.clear();
     out_degree.clear();
     feedback_vertex_set.clear();
-    feedback_vertex_set_vector.clear();
     not_piv.clear();
 }
 
-void ad_hoc() {
-    for (int i = 1; i <= n; ++i) {
-        candidates_nodes.emplace_back(i);
+vector<int> compute_markov(vector<int> list_of_nodes) {
+    // nodes from this list are in the same scc, it calculates some fvs and returns it
+    candidates_nodes = list_of_nodes;
+    loop();
+    erase_SCC_edges();
+    loop();
+    vector<int> ret, temp;
+    if (nr_ctc > 1) {
+        for (int i = 0; i < nr_ctc; ++i) {
+            temp = compute_markov(ctc[i]);
+            for (auto it : temp) {
+                ret.emplace_back(it);
+            }
+        }
+        return ret;
     }
-    contract_graph();
-    cout << candidates_nodes.size() << '\n';
-
+    candidates_nodes = ctc[0];
     int counter = 0;
     while (!candidates_nodes.empty()) {
         ++counter;
@@ -400,7 +392,7 @@ void ad_hoc() {
                 if (abs(nums[i][j]) > eps) {
                     if (j == m) {
                         cout << "Imposibil\n";
-                        return;
+                        return vector<int>();
                     }
                     arr[j] = nums[i][m];
                     for (k = j + 1; k < m; k++)
@@ -462,7 +454,7 @@ void ad_hoc() {
                 if (abs(nums[i][j]) > eps) {
                     if (j == m) {
                         cout << "Imposibil\n";
-                        return;
+                        return vector<int>();
                     }
                     arr[j] = nums[i][m];
                     for (k = j + 1; k < m; k++)
@@ -470,7 +462,7 @@ void ad_hoc() {
                     break;
                 }
 
-
+        nodes_.reserve(candidates_nodes.size());
         for (int i = 0; i < candidates_nodes.size(); ++i) {
             nodes_.emplace_back(arr[i] + mapp[candidates_nodes[i]], candidates_nodes[i]);
         }
@@ -490,13 +482,24 @@ void ad_hoc() {
             cout << candidates_nodes.size() << '\n';
         }
     }
+    for (auto it : feedback_vertex_set) {
+        ret.emplace_back(it);
+    }
+    feedback_vertex_set.clear();
+    return ret;
 }
 
 
-vector<int> sol_;
-vector<int> v_t_[1000001], ctc_[1000001], st_, v_[1000001];
-int used_[1000001], nrctc_;
-vector<int> bad_;
+void ad_hoc() {
+    for (int i = 1; i <= n; ++i) {
+        candidates_nodes.emplace_back(i);
+    }
+    contract_graph();
+    vector<int> fvs_vector = compute_markov(candidates_nodes);
+    for (auto it : fvs_vector) {
+        feedback_vertex_set.insert(it);
+    }
+}
 
 
 void dfs_(int nod) {
@@ -554,6 +557,10 @@ void try_to() {
         }
     }
     candidates_nodes = c2;
+    vector<int> feedback_vertex_set_vector2;
+    for (auto it : fvs) {
+        feedback_vertex_set_vector2.emplace_back(it);
+    }
     for (int ii = (int) feedback_vertex_set_vector2.size() - 1; ii >= 0; --ii) {
         auto it2 = feedback_vertex_set_vector2[ii];
         bad_.clear();
@@ -592,7 +599,6 @@ void testcase(const string &p_in, const string &p_out) {
     }
     ad_hoc();
     fvs = feedback_vertex_set;
-    feedback_vertex_set_vector2 = feedback_vertex_set_vector;
     cout << "--->" << feedback_vertex_set.size() << '\n';
     clear_sets();
     out.close();
@@ -613,7 +619,6 @@ void testcase(const string &p_in, const string &p_out) {
     for (auto it : fvs) out2 << it << ' ';
     out2 << '\n';
     fvs.clear();
-    feedback_vertex_set_vector2.clear();
     clear_sets();
     out2.close();
     in2.close();
@@ -623,12 +628,11 @@ void testcase(const string &p_in, const string &p_out) {
     }
 }
 
-
 signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
-    for (int t = 63; t <= 70; ++t) {
+    for (int t = 68; t <= 70; ++t) {
         begin_ = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
