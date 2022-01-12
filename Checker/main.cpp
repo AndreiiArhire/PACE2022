@@ -46,7 +46,7 @@ void solve() {
 
 signed main() {
 
-    for (int t = 32; t <= 67; ++t) {
+    for (int t = 1; t <= 70; ++t) {
         bad.clear();
         bad.resize(1000005, false);
         cout << "test " << t << " started\n";

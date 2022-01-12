@@ -802,9 +802,18 @@ void testcase(const string &p_in, const string &p_out) {
 
 signed main() {
     srand(0);
+    vector<int> tests;
+    tests.emplace_back(1);
+    tests.emplace_back(2);
+    tests.emplace_back(69);
+    tests.emplace_back(70);
+    for (int i = 16; i <= 28; ++i) {
+        tests.emplace_back(i);
+    }
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
-    for (curr_testcase = 32; curr_testcase <= 70; ++curr_testcase) {
+    for (auto i : tests) {
+        curr_testcase = i;
         begin_ = clock();
         cout << "test " << curr_testcase << " began\n";
         testcase(path_input + to_string(curr_testcase) + ".in", path_output + to_string(curr_testcase) + ".out");
