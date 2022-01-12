@@ -36,7 +36,15 @@ void erase_edge(int x, int y) {
 void dfs(int nod) {
     used[nod] = 1;
     for (int i : out_degree[nod]) {
-        if (!used[i]) dfs(i);
+        if (!used[i] && !edges.count(make_pair(i, nod))) dfs(i);
+    }
+    st.emplace_back(nod);
+}
+
+void dfs2(int nod) {
+    used[nod] = 1;
+    for (int i : out_degree[nod]) {
+        if (!used[i]) dfs2(i);
     }
     st.emplace_back(nod);
 }
@@ -44,19 +52,45 @@ void dfs(int nod) {
 void dfs_t(int nod) {
     used[nod] = 2;
     for (int i : in_degree[nod]) {
-        if (used[i] != 2) dfs_t(i);
+        if (used[i] != 2 && !edges.count(make_pair(nod, i))) dfs_t(i);
+    }
+    ctc_ind[nod] = nr_ctc;
+    ctc[nr_ctc].emplace_back(nod);
+}
+
+void dfs_t2(int nod) {
+    used[nod] = 2;
+    for (int i : in_degree[nod]) {
+        if (used[i] != 2) dfs_t2(i);
     }
     ctc_ind[nod] = nr_ctc;
     ctc[nr_ctc].emplace_back(nod);
 }
 
 
+void compute_SCC_edges() {
+    /*O((N+M)lgN)*/
+    nr_ctc = 0;
+    ctc.clear();
+    ctc.resize(candidates_nodes.size() + 1, vector<int>());
+    for (int i = 0; i <= init_n; ++i) {
+        used[i] = -1;
+    }
+    for (auto i : candidates_nodes) used[i] = 0;
+    for (auto i : candidates_nodes) if (!used[i]) dfs2(i);
+    while (!st.empty()) {
+        int nod = st.back();
+        if (used[nod] != 2) dfs_t2(nod), ++nr_ctc;
+        st.pop_back();
+    }
+}
+
 bool erase_SCC_edges() {
     /*O((N+M)lgN)*/
     bool ret = false;
     nr_ctc = 0;
     ctc.clear();
-    ctc.resize(candidates_nodes.size() + 1, vector<int>());
+    ctc.resize(n + 5, vector<int>());
     for (int i = 0; i <= init_n; ++i) {
         used[i] = -1;
     }
@@ -249,13 +283,13 @@ bool erase_CORE_nodes() {
 }
 
 bool erase_DOM_edges() {
-    /*O(N*M)*/
+    /*O(2*M*N*log(M)*log(M)*/
     bool ret = false;
     vector<pair<int, int>> to_be_erased;
     for (auto it : edges) {
         int dome = 1;
         for (auto node : in_degree[it.first]) {
-            if (!edges.count(make_pair(it.first, node)) && !edges.count(make_pair(node, it.second))) {
+            if (edges.count(make_pair(it.first, node)) || !edges.count(make_pair(node, it.second))) {
                 dome = 0;
                 break;
             }
@@ -263,7 +297,7 @@ bool erase_DOM_edges() {
         if (!dome) {
             dome = 1;
             for (auto node : out_degree[it.second]) {
-                if (!edges.count(make_pair(node, it.second)) && !edges.count(make_pair(it.first, node))) {
+                if (edges.count(make_pair(node, it.second)) || !edges.count(make_pair(it.first, node))) {
                     dome = 0;
                     break;
                 }
@@ -275,7 +309,7 @@ bool erase_DOM_edges() {
     }
     ret |= (bool) (to_be_erased.size());
     for (auto it : to_be_erased) {
-        edges.erase(it);
+        erase_edge(it.first, it.second);
     }
     return ret;
 }
@@ -287,17 +321,9 @@ void loop() {
         change |= erase_self_loop_nodes();
         change |= erase_0in_out_degree_nodes();
         change |= erase_1in_out_degree_nodes();
-    }
-}
-
-void loop2() {
-    bool change = true;
-    while (change) {
-        change = false;
-        change |= erase_self_loop_nodes();
-        change |= erase_0in_out_degree_nodes();
-        change |= erase_1in_out_degree_nodes();
-        change |= erase_SCC_edges();
+        if (edges.size() < 5e3) {
+            change |= erase_DOM_edges();
+        }
     }
 }
 
@@ -308,8 +334,10 @@ void contract_graph() {
     loop();
     erase_CORE_nodes();
     loop();
-    //erase_DOM_edges();
-    //loop();
+    if (edges.size() < 5e3) {
+        erase_DOM_edges();
+    }
+    loop();
 }
 
 
@@ -344,9 +372,7 @@ void clear_sets() {
 }
 
 void ad_hoc(int type) {
-    contract_graph();
     int counter = 0;
-    cout << candidates_nodes.size() << '\n';
     while (!candidates_nodes.empty()) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
@@ -378,9 +404,11 @@ void ad_hoc(int type) {
             erase_node(node);
             ++counter;
         }
+        /*
         if (counter % 100 == 0) {
-            cout << candidates_nodes.size() << '\n';
+            cout << candidates_nodes.size() << ' ' << edges.size() << '\n';
         }
+        */
     }
 
 }
@@ -389,13 +417,10 @@ void ad_hoc(int type) {
 void compute_markov(vector<int> list_of_nodes) {
     // nodes from this list are in the same scc, it calculates some fvs and returns it
     candidates_nodes = list_of_nodes;
-    loop2();
+    loop();
+    compute_SCC_edges();
     if (candidates_nodes.empty()) return;
     vector<int> ret, temp;
-    if (nr_ctc != 1) {
-        cout << "----------" << nr_ctc << '\n';
-        cout << nr_ctc << ' ' << ctc[0].size() << ' ' << ctc[1].size() << '\n';
-    }
     if (nr_ctc > 1) {
         vector<vector<int>> all;
         all.reserve(nr_ctc);
@@ -407,7 +432,6 @@ void compute_markov(vector<int> list_of_nodes) {
         }
         return;
     }
-    loop();
     if (candidates_nodes.empty()) return;
     candidates_nodes = ctc[0];
     clock_t end_ = clock();
@@ -559,7 +583,6 @@ void compute_markov(vector<int> list_of_nodes) {
 
 
 void ad_hoc_markov() {
-    contract_graph();
     compute_markov(candidates_nodes);
 }
 
@@ -578,6 +601,27 @@ void dfs_t_(int nod) {
         if (used_[vecin] != 2 && !bad_[vecin]) dfs_t_(vecin);
     }
     ctc_[nrctc_].emplace_back(nod);
+}
+
+int solve2_() {
+    int cnt = 0;
+    for (auto i : candidates_nodes) {
+        if (!used_[i] && !bad_[i]) {
+            ++cnt;
+            dfs_(i);
+        }
+    }
+    while (!st_.empty()) {
+        int nod = st_.back();
+        if (used_[nod] != 2 && !bad_[nod]) dfs_t_(nod), ++nrctc_;
+        st_.pop_back();
+    }
+    for (int i = 0; i < nrctc_; ++i) {
+        if (ctc_[i].size() != 1) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 int solve_() {
@@ -643,6 +687,9 @@ void try_to(int type) {
         auto it2 = fvs_vector[ii];
         bad_.clear();
         bad_.resize(n + 5, false);
+        for (int i = 0; i <= n + 5; ++i) {
+            used_[i] = 0;
+        }
         for (auto it : fvs) {
             bad_[it] = true;
         }
@@ -653,7 +700,7 @@ void try_to(int type) {
         sol_.clear();
         for (int i = 0; i <= n; ++i) {
             ctc_[i].clear();
-            used_[i] = false;
+            used_[i] = 0;
         }
         nrctc_ = 0;
         st.clear();
@@ -666,43 +713,91 @@ void try_to(int type) {
 }
 
 void find_fvs() {
-    if (candidates_nodes.size() <= 100) {
-        if (rand() % 2 == 0 && markov_count < 50) {
-            ++markov_count;
-            ad_hoc_markov();
-        } else {
-            ad_hoc(rand() % 2);
+    contract_graph();
+    bad_.clear();
+    bad_.resize(n + 5, true);
+    for (int i = 0; i <= n + 5; ++i) {
+        used_[i] = -1;
+    }
+    if (candidates_nodes.size() < 21) {
+        for (auto it : candidates_nodes) {
+            bad_[it] = false;
         }
+        int lim = (1 << candidates_nodes.size());
+        int best_sz = candidates_nodes.size(), best_mask = lim;
+        for (int mask = 0; mask < lim; ++mask) {
+            int sz = 0;
+            for (int i = 0; i < candidates_nodes.size(); ++i) {
+                if ((1 << i) & mask) {
+                    bad_[candidates_nodes[i]] = true;
+                    ++sz;
+                } else {
+                    used_[candidates_nodes[i]] = 0;
+                }
+            }
+            int temp = solve2_();
+            if (temp && sz < best_sz) {
+                best_sz = sz;
+                best_mask = mask;
+            }
+            for (int i = 0; i < candidates_nodes.size(); ++i) {
+                bad_[candidates_nodes[i]] = false;
+                used_[candidates_nodes[i]] = -1;
+            }
+            sol_.clear();
+            for (int i = 0; i <= nrctc_; ++i) {
+                ctc_[i].clear();
+            }
+            nrctc_ = 0;
+            st_.clear();
+        }
+        for (int i = 0; i < candidates_nodes.size(); ++i) {
+            erase_node(candidates_nodes[i]);
+        }
+        for (int i = 0; i < candidates_nodes.size(); ++i) {
+            if (!((1 << i) & best_mask)) {
+                feedback_vertex_set.erase(candidates_nodes[i]);
+            }
+        }
+        candidates_nodes.clear();
     } else {
-        if (candidates_nodes.size() <= 200) {
-            if (rand() % 2 == 0 && markov_count < 20) {
-                ++markov_count;
+        if (candidates_nodes.size() <= 100) {
+            if (rand() % 2 == 0 && markov_count < 100) {
                 ad_hoc_markov();
+                ++markov_count;
             } else {
                 ad_hoc(rand() % 2);
             }
         } else {
-            if (candidates_nodes.size() <= 300) {
-                if (rand() % 3 == 0 && markov_count < 10) {
+            if (candidates_nodes.size() <= 200) {
+                if (rand() % 2 == 0 && markov_count < 40) {
                     ++markov_count;
                     ad_hoc_markov();
                 } else {
                     ad_hoc(rand() % 2);
                 }
             } else {
-                if (candidates_nodes.size() <= 400) {
-                    if (rand() % 3 == 0 && markov_count < 5) {
-                        ad_hoc_markov();
+                if (candidates_nodes.size() <= 300) {
+                    if (rand() % 3 == 0 && markov_count < 10) {
                         ++markov_count;
+                        ad_hoc_markov();
                     } else {
                         ad_hoc(rand() % 2);
                     }
                 } else {
-                    ad_hoc(rand() % 2);
+                    if (candidates_nodes.size() <= 400) {
+                        if (rand() % 3 == 0 && markov_count < 5) {
+                            ad_hoc_markov();
+                            ++markov_count;
+                        } else {
+                            ad_hoc(rand() % 2);
+                        }
+                    } else {
+                        ad_hoc(rand() % 2);
+                    }
                 }
             }
         }
-
     }
 
     fvs = feedback_vertex_set;
@@ -742,6 +837,8 @@ void testcase(const string &p_in, const string &p_out) {
     for (int i = 1; i <= m; ++i) {
         in >> x >> y;
         add_edge(x, y);
+        v_[x].push_back(y);
+        v_t_[y].push_back(x);
         curr_edges.emplace_back(x, y);
     }
     for (int i = 1; i <= n; ++i) {
@@ -755,7 +852,6 @@ void testcase(const string &p_in, const string &p_out) {
         if (elapsed_secs >= 600 - 5) {
             break;
         }
-        cout << "iter no -> " << i << ' ' << curr_testcase << '\n';
         n = init_n;
         m = init_m;
         set_size();
@@ -785,11 +881,9 @@ void testcase(const string &p_in, const string &p_out) {
             }
         }
         find_fvs();
-        cout << best_fvs.size() << '\n';
         if (best_fvs.empty()) break;
     }
-
-    cout << best_fvs.size() << '\n';
+    cout << "--" << best_fvs.size() << '\n';
     out << best_fvs.size() << '\n';
     for (auto it : best_fvs) out << it << ' ';
     out << '\n';
@@ -803,11 +897,7 @@ void testcase(const string &p_in, const string &p_out) {
 signed main() {
     srand(0);
     vector<int> tests;
-    tests.emplace_back(1);
-    tests.emplace_back(2);
-    tests.emplace_back(69);
-    tests.emplace_back(70);
-    for (int i = 16; i <= 28; ++i) {
+    for (int i = 3; i <= 3; ++i) {
         tests.emplace_back(i);
     }
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
