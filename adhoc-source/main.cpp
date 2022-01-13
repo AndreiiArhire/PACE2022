@@ -18,6 +18,7 @@ vector<int> bad_;
 int init_n, init_m, markov_count;
 vector<pair<int, int>> curr_edges;
 int curr_testcase;
+int debug = 0;
 
 void add_edge(int x, int y) {
     /*O(lgN)*/
@@ -36,7 +37,9 @@ void erase_edge(int x, int y) {
 void dfs(int nod) {
     used[nod] = 1;
     for (int i : out_degree[nod]) {
-        if (!used[i] && !edges.count(make_pair(i, nod))) dfs(i);
+        if (!used[i] && !edges.count(make_pair(i, nod))) {
+            dfs(i);
+        }
     }
     st.emplace_back(nod);
 }
@@ -90,12 +93,15 @@ bool erase_SCC_edges() {
     bool ret = false;
     nr_ctc = 0;
     ctc.clear();
-    ctc.resize(n + 5, vector<int>());
+    ctc.resize(candidates_nodes.size() + 5, vector<int>());
     for (int i = 0; i <= init_n; ++i) {
         used[i] = -1;
     }
     for (auto i : candidates_nodes) used[i] = 0;
-    for (auto i : candidates_nodes) if (!used[i]) dfs(i);
+    for (auto i : candidates_nodes)
+        if (!used[i]) {
+            dfs(i);
+        }
     while (!st.empty()) {
         int nod = st.back();
         if (used[nod] != 2) dfs_t(nod), ++nr_ctc;
@@ -416,6 +422,7 @@ void ad_hoc(int type) {
 
 void compute_markov(vector<int> list_of_nodes) {
     // nodes from this list are in the same scc, it calculates some fvs and returns it
+    /// !!! must use scc grade when
     candidates_nodes = list_of_nodes;
     loop();
     compute_SCC_edges();
@@ -586,19 +593,43 @@ void ad_hoc_markov() {
     compute_markov(candidates_nodes);
 }
 
+void dfs_3(int nod) {
+    used_[nod] = 1;
+    for (int vecin : v_[nod]) {
+        if (!used_[vecin] && !bad_[vecin]) {
+            dfs_3(vecin);
+        }
+    }
+    st_.emplace_back(nod);
+}
 
 void dfs_(int nod) {
     used_[nod] = 1;
-    for (int vecin : v_[nod]) {
-        if (!used_[vecin] && !bad_[vecin]) dfs_(vecin);
+    for (int vecin : out_degree[nod]) {
+        if (!used_[vecin] && !bad_[vecin]) {
+            dfs_(vecin);
+        }
     }
     st_.emplace_back(nod);
 }
 
 void dfs_t_(int nod) {
     used_[nod] = 2;
+    for (int vecin : in_degree[nod]) {
+        if (used_[vecin] != 2 && !bad_[vecin]) {
+            dfs_t_(vecin);
+        }
+    }
+    ctc_[nrctc_].emplace_back(nod);
+}
+
+void dfs_t_3(int nod) {
+    used_[nod] = 2;
     for (int vecin : v_t_[nod]) {
-        if (used_[vecin] != 2 && !bad_[vecin]) dfs_t_(vecin);
+
+        if (used_[vecin] != 2 && !bad_[vecin]) {
+            dfs_t_3(vecin);
+        }
     }
     ctc_[nrctc_].emplace_back(nod);
 }
@@ -629,12 +660,12 @@ int solve_() {
     for (int i = 1; i <= n; ++i) {
         if (!used_[i] && !bad_[i]) {
             ++cnt;
-            dfs_(i);
+            dfs_3(i);
         }
     }
     while (!st_.empty()) {
         int nod = st_.back();
-        if (used_[nod] != 2 && !bad_[nod]) dfs_t_(nod), ++nrctc_;
+        if (used_[nod] != 2 && !bad_[nod]) dfs_t_3(nod), ++nrctc_;
         st_.pop_back();
     }
     for (int i = 0; i < nrctc_; ++i) {
@@ -714,12 +745,13 @@ void try_to(int type) {
 
 void find_fvs() {
     contract_graph();
+    /// GRAFUL SE CONTRACTA SI LISTELE DE ADIACENTA NU MAI SUNT VALIDE !!! POT APAREA NOI MUCHII
     bad_.clear();
     bad_.resize(n + 5, true);
     for (int i = 0; i <= n + 5; ++i) {
         used_[i] = -1;
     }
-    if (candidates_nodes.size() < 21) {
+    if (candidates_nodes.size() < 20) {
         for (auto it : candidates_nodes) {
             bad_[it] = false;
         }
@@ -759,12 +791,32 @@ void find_fvs() {
                 feedback_vertex_set.erase(candidates_nodes[i]);
             }
         }
+        int sz = 0;
+        for (int i = 0; i < candidates_nodes.size(); ++i) {
+            if ((1 << i) & best_mask) {
+                sz++;
+                bad_[candidates_nodes[i]] = true;
+            } else {
+                used_[candidates_nodes[i]] = 0;
+            }
+        }
+        for (int i = 0; i < candidates_nodes.size(); ++i) {
+            bad_[candidates_nodes[i]] = false;
+            used_[candidates_nodes[i]] = -1;
+        }
+        sol_.clear();
+        for (int i = 0; i <= nrctc_; ++i) {
+            ctc_[i].clear();
+        }
+        nrctc_ = 0;
+        st_.clear();
         candidates_nodes.clear();
     } else {
         if (candidates_nodes.size() <= 100) {
             if (rand() % 2 == 0 && markov_count < 100) {
-                ad_hoc_markov();
+                //ad_hoc_markov();
                 ++markov_count;
+                ad_hoc(rand() % 2);
             } else {
                 ad_hoc(rand() % 2);
             }
@@ -772,7 +824,8 @@ void find_fvs() {
             if (candidates_nodes.size() <= 200) {
                 if (rand() % 2 == 0 && markov_count < 40) {
                     ++markov_count;
-                    ad_hoc_markov();
+                    //        ad_hoc_markov();
+                    ad_hoc(rand() % 2);
                 } else {
                     ad_hoc(rand() % 2);
                 }
@@ -780,14 +833,16 @@ void find_fvs() {
                 if (candidates_nodes.size() <= 300) {
                     if (rand() % 3 == 0 && markov_count < 10) {
                         ++markov_count;
-                        ad_hoc_markov();
+                        ad_hoc(rand() % 2);
+                        //            ad_hoc_markov();
                     } else {
                         ad_hoc(rand() % 2);
                     }
                 } else {
                     if (candidates_nodes.size() <= 400) {
                         if (rand() % 3 == 0 && markov_count < 5) {
-                            ad_hoc_markov();
+                            //              ad_hoc_markov();
+                            ad_hoc(rand() % 2);
                             ++markov_count;
                         } else {
                             ad_hoc(rand() % 2);
@@ -799,8 +854,11 @@ void find_fvs() {
             }
         }
     }
-
     fvs = feedback_vertex_set;
+    for (int i = 0; i <= n; ++i) {
+        v_[i].clear();
+        v_t_[i].clear();
+    }
     clear_sets();
     n = init_n;
     m = init_m;
@@ -845,8 +903,7 @@ void testcase(const string &p_in, const string &p_out) {
         candidates_nodes.emplace_back(i);
     }
     find_fvs();
-
-    for (int i = 1;; ++i) {
+    for (int i = 1; i < 10000; ++i) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
         if (elapsed_secs >= 600 - 5) {
@@ -882,6 +939,7 @@ void testcase(const string &p_in, const string &p_out) {
         }
         find_fvs();
         if (best_fvs.empty()) break;
+        cout << "--" << best_fvs.size() << ' ' << i << '\n';
     }
     cout << "--" << best_fvs.size() << '\n';
     out << best_fvs.size() << '\n';
@@ -897,7 +955,8 @@ void testcase(const string &p_in, const string &p_out) {
 signed main() {
     srand(0);
     vector<int> tests;
-    for (int i = 3; i <= 3; ++i) {
+    //tests.emplace_back(10);
+    for (int i = 65; i > 64; --i) {
         tests.emplace_back(i);
     }
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
