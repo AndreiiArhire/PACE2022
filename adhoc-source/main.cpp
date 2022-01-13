@@ -33,7 +33,7 @@ void erase_edge(int x, int y) {
     in_degree[y].erase(x);
     out_degree[x].erase(y);
 }
-
+int cou ;
 void dfs(int nod) {
     used[nod] = 1;
     for (int i : out_degree[nod]) {
@@ -751,7 +751,7 @@ void find_fvs() {
     for (int i = 0; i <= n + 5; ++i) {
         used_[i] = -1;
     }
-    if (candidates_nodes.size() < 20) {
+    if (candidates_nodes.size() < 21) {
         for (auto it : candidates_nodes) {
             bad_[it] = false;
         }
@@ -903,7 +903,7 @@ void testcase(const string &p_in, const string &p_out) {
         candidates_nodes.emplace_back(i);
     }
     find_fvs();
-    for (int i = 1; i < 10000; ++i) {
+    for (int i = 1; i; ++i) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
         if (elapsed_secs >= 600 - 5) {
@@ -956,7 +956,7 @@ signed main() {
     srand(0);
     vector<int> tests;
     //tests.emplace_back(10);
-    for (int i = 65; i > 64; --i) {
+    for (int i = 64; i > 9; --i) {
         tests.emplace_back(i);
     }
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
