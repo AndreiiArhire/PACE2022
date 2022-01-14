@@ -18,7 +18,6 @@ vector<int> bad_;
 int init_n, init_m, markov_count;
 vector<pair<int, int>> curr_edges;
 int curr_testcase;
-int debug = 0;
 
 void add_edge(int x, int y) {
     /*O(lgN)*/
@@ -33,7 +32,7 @@ void erase_edge(int x, int y) {
     in_degree[y].erase(x);
     out_degree[x].erase(y);
 }
-int cou ;
+
 void dfs(int nod) {
     used[nod] = 1;
     for (int i : out_degree[nod]) {
@@ -61,10 +60,10 @@ void dfs_t(int nod) {
     ctc[nr_ctc].emplace_back(nod);
 }
 
-void dfs_t2(int nod) {
+void dfs2_t(int nod) {
     used[nod] = 2;
     for (int i : in_degree[nod]) {
-        if (used[i] != 2) dfs_t2(i);
+        if (used[i] != 2) dfs2_t(i);
     }
     ctc_ind[nod] = nr_ctc;
     ctc[nr_ctc].emplace_back(nod);
@@ -83,7 +82,7 @@ void compute_SCC_edges() {
     for (auto i : candidates_nodes) if (!used[i]) dfs2(i);
     while (!st.empty()) {
         int nod = st.back();
-        if (used[nod] != 2) dfs_t2(nod), ++nr_ctc;
+        if (used[nod] != 2) dfs2_t(nod), ++nr_ctc;
         st.pop_back();
     }
 }
@@ -336,8 +335,11 @@ void loop() {
 void contract_graph() {
     /*O(N(N+M)lgN*/
     loop();
-    erase_SCC_edges();
-    loop();
+    if (candidates_nodes.size() < 3e4) { /// prevention to not stack overflow
+        /// if EXIT CODE 0xC00000FD then comment the line below
+        erase_SCC_edges();
+        loop();
+    }
     erase_CORE_nodes();
     loop();
     if (edges.size() < 5e3) {
@@ -593,42 +595,42 @@ void ad_hoc_markov() {
     compute_markov(candidates_nodes);
 }
 
-void dfs_3(int nod) {
+void dfs3(int nod) {
     used_[nod] = 1;
     for (int vecin : v_[nod]) {
         if (!used_[vecin] && !bad_[vecin]) {
-            dfs_3(vecin);
+            dfs3(vecin);
         }
     }
     st_.emplace_back(nod);
 }
 
-void dfs_(int nod) {
+void dfs4(int nod) {
     used_[nod] = 1;
     for (int vecin : out_degree[nod]) {
         if (!used_[vecin] && !bad_[vecin]) {
-            dfs_(vecin);
+            dfs4(vecin);
         }
     }
     st_.emplace_back(nod);
 }
 
-void dfs_t_(int nod) {
+void dfs4_t(int nod) {
     used_[nod] = 2;
     for (int vecin : in_degree[nod]) {
         if (used_[vecin] != 2 && !bad_[vecin]) {
-            dfs_t_(vecin);
+            dfs4_t(vecin);
         }
     }
     ctc_[nrctc_].emplace_back(nod);
 }
 
-void dfs_t_3(int nod) {
+void dfs3_t(int nod) {
     used_[nod] = 2;
     for (int vecin : v_t_[nod]) {
 
         if (used_[vecin] != 2 && !bad_[vecin]) {
-            dfs_t_3(vecin);
+            dfs3_t(vecin);
         }
     }
     ctc_[nrctc_].emplace_back(nod);
@@ -639,12 +641,12 @@ int solve2_() {
     for (auto i : candidates_nodes) {
         if (!used_[i] && !bad_[i]) {
             ++cnt;
-            dfs_(i);
+            dfs4(i);
         }
     }
     while (!st_.empty()) {
         int nod = st_.back();
-        if (used_[nod] != 2 && !bad_[nod]) dfs_t_(nod), ++nrctc_;
+        if (used_[nod] != 2 && !bad_[nod]) dfs4_t(nod), ++nrctc_;
         st_.pop_back();
     }
     for (int i = 0; i < nrctc_; ++i) {
@@ -660,12 +662,12 @@ int solve_() {
     for (int i = 1; i <= n; ++i) {
         if (!used_[i] && !bad_[i]) {
             ++cnt;
-            dfs_3(i);
+            dfs3(i);
         }
     }
     while (!st_.empty()) {
         int nod = st_.back();
-        if (used_[nod] != 2 && !bad_[nod]) dfs_t_3(nod), ++nrctc_;
+        if (used_[nod] != 2 && !bad_[nod]) dfs3_t(nod), ++nrctc_;
         st_.pop_back();
     }
     for (int i = 0; i < nrctc_; ++i) {
@@ -744,6 +746,7 @@ void try_to(int type) {
 }
 
 void find_fvs() {
+    cout << candidates_nodes.size() << '\n';
     contract_graph();
     /// GRAFUL SE CONTRACTA SI LISTELE DE ADIACENTA NU MAI SUNT VALIDE !!! POT APAREA NOI MUCHII
     bad_.clear();
@@ -903,6 +906,7 @@ void testcase(const string &p_in, const string &p_out) {
         candidates_nodes.emplace_back(i);
     }
     find_fvs();
+    cout << "-1--" << best_fvs.size() << '\n';
     for (int i = 1; i; ++i) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
@@ -955,8 +959,8 @@ void testcase(const string &p_in, const string &p_out) {
 signed main() {
     srand(0);
     vector<int> tests;
-    //tests.emplace_back(10);
-    for (int i = 64; i > 9; --i) {
+    //tests.emplace_back(1/0);
+    for (int i = 10; i > 0; --i) {
         tests.emplace_back(i);
     }
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
@@ -971,6 +975,5 @@ signed main() {
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
         cout << "time elapsed in seconds: " << elapsed_secs << '\n';
     }
-
     return 0;
 }
