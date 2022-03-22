@@ -381,7 +381,6 @@ int getMaleFitness(vector<int> offspring) {
             if (alreadyChecked[node]) {
                 continue;
             }
-            //    cout << "**" << node << '\n';
             alreadyChecked[node] = true;
             rightPart.push_front(node);
             for (auto it : in_degree_local[node]) {
@@ -399,7 +398,6 @@ int getMaleFitness(vector<int> offspring) {
             if (alreadyChecked[node]) {
                 continue;
             }
-            //    cout << "--" << node << '\n';
             alreadyChecked[node] = true;
             leftPart.push_back(node);
             for (auto it : out_degree_local[node]) {
@@ -418,7 +416,6 @@ int getMaleFitness(vector<int> offspring) {
             ((int) out_degree_local[node.first].size()) - ((int) in_degree_local[node.first].size())) {
             continue;
         }
-        // cout << ")))))" << node.first << ' ' << node.second << '\n';
         alreadyChecked[node.first] = true;
         leftPart.emplace_back(node.first);
         for (auto it : out_degree_local[node.first]) {
@@ -453,7 +450,6 @@ int getMaleFitness(vector<int> offspring) {
             ++missMatch;
         }
     }
-    cout << missMatch << '\n';
     return missMatch;
 }
 
