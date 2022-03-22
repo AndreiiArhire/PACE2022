@@ -6,6 +6,7 @@ vector<int> sol;
 vector<int> v_t[1000001], ctc[1000001], st, v[1000001];
 int used[1000001], nrctc, n, m;
 vector<bool> bad(1000000, true);
+set<pair<int, int> > edges;
 
 void dfs(int nod) {
     used[nod] = 1;
@@ -46,7 +47,7 @@ void solve() {
 
 signed main() {
 
-    for (int t = 71; t <= 72; ++t) {
+    for (int t = 5; t >= 5 ; --t) {
         bad.clear();
         bad.resize(1000005, false);
         cout << "test " << t << " started\n";
@@ -71,7 +72,8 @@ signed main() {
         in2 >> n >> m;
         for (int i = 1; i <= m; ++i) {
             in2 >> x >> y;
-            if (used[x] || used[y]) continue;
+            if (bad[x] || bad[y]) continue;
+            edges.insert(make_pair(x, y));
             v[x].push_back(y);
             v_t[y].push_back(x);
         }
@@ -89,6 +91,7 @@ signed main() {
         }
         nrctc = 0;
         st.clear();
+        edges.clear();
     }
 
 

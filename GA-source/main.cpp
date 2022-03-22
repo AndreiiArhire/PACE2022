@@ -637,12 +637,12 @@ void testcase(const string &p_in, const string &p_out) {
     }
 
     contract_graph();
+    cout << candidates_nodes.size() << '\n';
     run_GA();
-
     out << feedback_vertex_set.size() << '\n';
     for (auto it : feedback_vertex_set) out << it << ' ';
     out << '\n';
-
+    cout << "************************************\n";
     clear_sets();
     out.close();
     in.close();
@@ -651,7 +651,7 @@ void testcase(const string &p_in, const string &p_out) {
 
 signed main() {
     srand(0);
-    string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
+    string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)";
     for (int t = 1; t <= 60; ++t) {
         c_start = clock();

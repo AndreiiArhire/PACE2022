@@ -17,7 +17,9 @@ int used_[1000001], nrctc_;
 vector<int> bad_;
 int init_n, init_m, markov_count;
 vector<pair<int, int>> curr_edges;
-int curr_testcase;
+int curr_testcase, ad_hoc_counter, current_iteration;
+vector<int> double_edges_in_node;
+vector<bool> always_in_fvs;
 
 void add_edge(int x, int y) {
     /*O(lgN)*/
@@ -352,6 +354,7 @@ void contract_graph() {
 void set_size() {
     /*O(N*lgN)*/
     nr_ctc = 0;
+    always_in_fvs.resize(n + 1, false);
     priority.resize(n + 1);
     ctc.resize(n + 1, vector<int>());
     in_degree.resize(n + 1, set<int>());
@@ -363,6 +366,7 @@ void set_size() {
 
 void clear_sets() {
     /*O(N*lgN)*/
+    always_in_fvs.clear();
     priority.clear();
     edges.clear();
     ctc.clear();
@@ -381,6 +385,22 @@ void clear_sets() {
 
 void ad_hoc(int type) {
     int counter = 0;
+    ++ad_hoc_counter;
+    type = rand() % 2;
+    /*
+    if (3 > current_iteration % 10) {
+        type = 0;
+    }
+    if (6 > current_iteration % 10 && current_iteration % 10 > 2) {
+        type = 1;
+    }
+    if (8 > current_iteration % 10 && current_iteration % 10 > 5) {
+        type = 2;
+    }
+    if (current_iteration % 10 > 7) {
+        type = 3;
+    }
+    */
     while (!candidates_nodes.empty()) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
@@ -396,19 +416,42 @@ void ad_hoc(int type) {
         if (candidates_nodes.empty()) continue;
         for (auto it : candidates_nodes) {
             if (type == 0) {
-                priority[it] = -(in_degree[it].size() * out_degree[it].size());
+                priority[it] = -((in_degree[it].size()) *
+                                 (out_degree[it].size()));
             }
             if (type == 1) {
                 priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
                                  0.3 * abs((double) in_degree[it].size() - out_degree[it].size()));
             }
+            if (type == 2) {
+                priority[it] = -(min(in_degree[it].size(), out_degree[it].size()));
+            }
+            if (type == 3) {
+                priority[it] = -(((double) (in_degree[it].size() + out_degree[it].size())) +
+                                 ((double) (double_edges_in_node[it])) * 3.5);
+            }
         }
+
         sort(candidates_nodes.begin(), candidates_nodes.end(),
              [](int a, int b) { return priority[a] > priority[b]; });
         int node;
         for (int i = 1; i <= 1 + candidates_nodes.size() / 10000; ++i) {
             node = candidates_nodes.back();
             candidates_nodes.pop_back();
+            if (in_degree[node].size() < out_degree[node].size()) {
+                for (auto it : in_degree[node]) {
+                    if (edges.count(make_pair(node, it))) {
+                        --double_edges_in_node[it];
+                    }
+                }
+            } else {
+                for (auto it : out_degree[node]) {
+                    if (edges.count(make_pair(it, node))) {
+                        --double_edges_in_node[it];
+                    }
+                }
+            }
+            double_edges_in_node[node] = 0;
             erase_node(node);
             ++counter;
         }
@@ -746,8 +789,20 @@ void try_to(int type) {
 }
 
 void find_fvs() {
-    cout << candidates_nodes.size() << '\n';
     contract_graph();
+    double_edges_in_node.clear();
+    double_edges_in_node.resize(n + 5, 0);
+    if (current_iteration == 0) {
+        for (auto it : feedback_vertex_set) {
+            always_in_fvs[it] = true;
+        }
+    }
+    for (auto it : edges) {
+        if (it.first < it.second && edges.count(make_pair(it.second, it.first))) {
+            ++double_edges_in_node[it.first];
+            ++double_edges_in_node[it.second];
+        }
+    }
     /// GRAFUL SE CONTRACTA SI LISTELE DE ADIACENTA NU MAI SUNT VALIDE !!! POT APAREA NOI MUCHII
     bad_.clear();
     bad_.resize(n + 5, true);
@@ -884,6 +939,7 @@ void find_fvs() {
         v_[i].clear();
         v_t_[i].clear();
     }
+    ad_hoc_counter = 0;
 }
 
 void testcase(const string &p_in, const string &p_out) {
@@ -892,6 +948,10 @@ void testcase(const string &p_in, const string &p_out) {
     ofstream out(p_out);
     int x, y;
     in >> init_n >> init_m;
+    if (init_n == 0) {
+        // empty testcase
+        return;
+    }
     n = init_n;
     m = init_m;
     set_size();
@@ -907,7 +967,7 @@ void testcase(const string &p_in, const string &p_out) {
     }
     find_fvs();
     cout << "-1--" << best_fvs.size() << '\n';
-    for (int i = 1; i; ++i) {
+    for (current_iteration = 1;; ++current_iteration) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
         if (elapsed_secs >= 600 - 5) {
@@ -931,10 +991,23 @@ void testcase(const string &p_in, const string &p_out) {
         shuffle(curr_fvs.begin(), curr_fvs.end(), default_random_engine(num));
         vector<int> ap(n + 2, 0);
         vector<int> parts = {2, 3, 4, 5};
-        int sz = (int) curr_fvs.size() / parts[rand() % 3];
-        for (int j = 0; j < sz; ++j) {
+        int part = rand() % 2;
+        int sz = (int) curr_fvs.size() / parts[part];
+        int counter = 0;
+        for (auto it : curr_fvs) {
+            if (always_in_fvs[it]) {
+                ap[it] = 1;
+                erase_node(it);
+                ++counter;
+            }
+        }
+        for (int j = 0; counter < sz && j < curr_fvs.size(); ++j) {
+            if (always_in_fvs[curr_fvs[j]]) {
+                continue;
+            }
             ap[curr_fvs[j]] = 1;
             erase_node(curr_fvs[j]);
+            ++counter;
         }
         for (int j = 1; j <= n; ++j) {
             if (!ap[j]) {
@@ -943,10 +1016,11 @@ void testcase(const string &p_in, const string &p_out) {
         }
         find_fvs();
         if (best_fvs.empty()) break;
-        cout << "--" << best_fvs.size() << ' ' << i << '\n';
+        cout << "--" << best_fvs.size() << ' ' << current_iteration << '\n';
     }
     cout << "--" << best_fvs.size() << '\n';
     out << best_fvs.size() << '\n';
+    cout << best_fvs.size() << '\n';
     for (auto it : best_fvs) out << it << ' ';
     out << '\n';
     curr_edges.clear();
@@ -959,12 +1033,12 @@ void testcase(const string &p_in, const string &p_out) {
 signed main() {
     srand(0);
     vector<int> tests;
-    //tests.emplace_back(1/0);
-    for (int i = 10; i > 0; --i) {
+    //tests.emplace_back(10);
+    for (int i = 1; i <= 1; ++i) {
         tests.emplace_back(i);
     }
-    string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
-    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
+    string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
+    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
     for (auto i : tests) {
         curr_testcase = i;
         begin_ = clock();
