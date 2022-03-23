@@ -337,16 +337,16 @@ void loop() {
 void contract_graph() {
     /*O(N(N+M)lgN*/
     loop();
-    if (candidates_nodes.size() < 3e4) { /// prevention to not stack overflow
+   // if (candidates_nodes.size() < 3e4) { /// prevention to not stack overflow
         /// if EXIT CODE 0xC00000FD then comment the line below
         erase_SCC_edges();
         loop();
-    }
+    //}
     erase_CORE_nodes();
     loop();
-    if (edges.size() < 5e3) {
+    //if (edges.size() < 5e3) {
         erase_DOM_edges();
-    }
+    //}
     loop();
 }
 
@@ -404,7 +404,7 @@ void ad_hoc(int type) {
     while (!candidates_nodes.empty()) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-        if (elapsed_secs >= 600 - 5) {
+        if (elapsed_secs >= 20 - 5) {
             /*abort mision*/
             cout << "ad_hoc stopped!\n";
             for (int i = 1; i <= n; ++i) {
@@ -488,7 +488,7 @@ void compute_markov(vector<int> list_of_nodes) {
     candidates_nodes = ctc[0];
     clock_t end_ = clock();
     double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-    if (elapsed_secs >= 600 - 5) {
+    if (elapsed_secs >= 20 - 5) {
         /*abort mision*/
         cout << "ad_hoc stopped!\n";
         for (int i = 1; i <= n; ++i) {
@@ -725,13 +725,14 @@ int solve_() {
 void try_to(int type) {
     clock_t end_ = clock();
     double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-    if (elapsed_secs >= 600 - 5) {
+    if (elapsed_secs >= 20 - 5) {
         return;
     }
     for (int i = 1; i <= n; ++i) {
         candidates_nodes.emplace_back(i);
     }
     contract_graph();
+    cout << candidates_nodes.size() << ' ' << feedback_vertex_set.size() << '\n';
     vector<int> ap(n + 2, 0);
     for (auto it : fvs) {
         ap[it] = 1;
@@ -782,7 +783,7 @@ void try_to(int type) {
         st.clear();
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-        if (elapsed_secs >= 600 - 5) {
+        if (elapsed_secs >= 20 - 5) {
             break;
         }
     }
@@ -970,7 +971,7 @@ void testcase(const string &p_in, const string &p_out) {
     for (current_iteration = 1;; ++current_iteration) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-        if (elapsed_secs >= 600 - 5) {
+        if (elapsed_secs >= 20 - 5) {
             break;
         }
         n = init_n;
@@ -1034,11 +1035,11 @@ signed main() {
     srand(0);
     vector<int> tests;
     //tests.emplace_back(10);
-    for (int i = 1; i <= 1; ++i) {
+    for (int i = 49; i <= 49; ++i) {
         tests.emplace_back(i);
     }
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
-    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
+    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
     for (auto i : tests) {
         curr_testcase = i;
         begin_ = clock();

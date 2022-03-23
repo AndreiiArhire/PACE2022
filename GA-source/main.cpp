@@ -4,11 +4,11 @@ using namespace std;
 
 set<pair<int, int>> edges;
 vector<vector<int>> ctc;
-const int NR_SECONDS = 30 - 5;
+const int NR_SECONDS = 600 - 5;
 vector<int> used, ctc_ind, st, used_pie, not_piv, individual_gene;
 int n, nr_ctc, m, theta = 3;
 time_t c_start;
-int initial_population_size = 100, number_of_generations = 300, best_female_fitness;
+int initial_population_size = 200, number_of_generations = 300, best_female_fitness;
 vector<vector<int>> male_population, female_population;
 vector<int> candidates_nodes, individual, fitness_chromosome, best_female_chromosome;
 vector<set<int>> in_degree, out_degree;
@@ -508,7 +508,7 @@ void run_GA() {
     for (int gen = 1; gen <= number_of_generations; ++gen) {
         vector<vector<int>> new_female_population, new_male_population;
 
-        for (int k = 1; k <= 800; ++k) {
+        for (int k = 1; k <= 2000; ++k) {
             double rand_males = ((double) rand() / (RAND_MAX));
             double rand_females = ((double) rand() / (RAND_MAX));
             double curr_males = 0;
@@ -556,6 +556,7 @@ void run_GA() {
                 for (int i = candidates_nodes.size(); i < candidates_nodes.size() + length; ++i) {
                     offspring[i] = rand() % 2;
                 }
+
                 offspring[offspring.size() - 1] = 0;
                 offspring[offspring.size() - 2] = 0;
             }
@@ -635,11 +636,12 @@ void testcase(const string &p_in, const string &p_out) {
         in >> x >> y;
         add_edge(x, y);
     }
-
+    cout << feedback_vertex_set.size() << '\n';
     contract_graph();
     cout << candidates_nodes.size() << '\n';
     run_GA();
     out << feedback_vertex_set.size() << '\n';
+    cout << feedback_vertex_set.size() << '\n';
     for (auto it : feedback_vertex_set) out << it << ' ';
     out << '\n';
     cout << "************************************\n";
@@ -650,10 +652,11 @@ void testcase(const string &p_in, const string &p_out) {
 
 
 signed main() {
+
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)";
-    for (int t = 1; t <= 60; ++t) {
+    for (int t = 7; t <= 7; ++t) {
         c_start = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
