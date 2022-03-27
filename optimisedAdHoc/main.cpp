@@ -4,7 +4,7 @@ using namespace std;
 
 struct cmp {
     bool inline operator()(const pair<int, long long> &i, const pair<int, long long> &j) {
-        return i.second < j.second;
+        return i.second < j.second || (i.second == j.second && i.first < j.first);
     }
 };
 
@@ -43,8 +43,6 @@ void eraseEdge(int x, int y, int z) {
     edges.erase(make_pair(x, y));
     outDegree[x].erase(y);
     inDegree[y].erase(x);
-    // checkNodeCanBeReduced(x);
-    // checkNodeCanBeReduced(y);
     if ((z == 1 || z == 3) && !checkNodeCanBeReduced(x)) {
         availableNodes.push(make_pair(x, 1LL * inDegree[x].size() * outDegree[x].size()));
     }
@@ -141,22 +139,53 @@ void bypassNode(int node) {
     }
     for (auto it1 : inNodes) {
         for (auto it2 : outNodes) {
+            if (edges.count(make_pair(it1, it2))) {
+                checkNodeCanBeReduced(it1);
+                availableNodes.push(make_pair(it1, 1LL * inDegree[it1].size() * outDegree[it1].size()));
+                checkNodeCanBeReduced(it2);
+                availableNodes.push(make_pair(it2, 1LL * inDegree[it2].size() * outDegree[it2].size()));
+            }
+            if (it1 == it2) {
+                edges.insert(make_pair(it1, it2));
+                selfLoopNodes.emplace_back(it1);
+            }
             addEdge(it1, it2);
         }
     }
+
+    /*
+    for (auto it1 : inNodes) {
+        availableNodes.push(make_pair(it1, 1LL * inDegree[it1].size() * outDegree[it1].size()));
+    }
+    for (auto it2 : outNodes) {
+        availableNodes.push(make_pair(it2, 1LL * inDegree[it2].size() * outDegree[it2].size()));
+    }
+    */
+
+    if (inNodes.size() == 1) {
+        availableNodes.push(
+                make_pair(inNodes.back(), 1LL * inDegree[inNodes.back()].size() * outDegree[inNodes.back()].size()));
+    }
+    if (outNodes.size() == 1) {
+        availableNodes.push(
+                make_pair(outNodes.back(), 1LL * inDegree[outNodes.back()].size() * outDegree[outNodes.back()].size()));
+    }
+
+    /*
     for (auto it : inNodes) {
         checkNodeCanBeReduced(it);
     }
     for (auto it : outNodes) {
         checkNodeCanBeReduced(it);
     }
+    */
 }
 
-void findDFVS() {
-    bool sw = true;
-    while (sw) {
-        sw = false;
-        sw |= !selfLoopNodes.empty();
+void doBasicReductions() {
+    bool change = true;
+    while (change) {
+        change = false;
+        change |= !selfLoopNodes.empty();
         while (!selfLoopNodes.empty()) {
             int node = selfLoopNodes.back();
             selfLoopNodes.pop_back();
@@ -166,7 +195,7 @@ void findDFVS() {
             eraseNode(node);
             feedbackVertexSet.insert(node);
         }
-        sw |= !zeroDegreeNodes.empty();
+        change |= !zeroDegreeNodes.empty();
         while (!zeroDegreeNodes.empty()) {
             int node = zeroDegreeNodes.back();
             zeroDegreeNodes.pop_back();
@@ -175,20 +204,37 @@ void findDFVS() {
             }
             eraseNode(node);
         }
-        sw |= !oneDegreeNodes.empty();
+        change |= !oneDegreeNodes.empty();
         while (!oneDegreeNodes.empty()) {
             int node = oneDegreeNodes.back();
             oneDegreeNodes.pop_back();
             bypassNode(node);
         }
     }
-    for (auto it : candidatesNodes) {
-        if (inDegree[it].size() == 1 || outDegree[it].size() == 1) {
-            cout << "????\n";
-            exit(0);
+}
+
+ofstream out(R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test199.out)");
+
+void findDFVS() {
+    doBasicReductions();
+    while (!availableNodes.empty()) {
+        pair<int, long long> topNode = availableNodes.top();
+        availableNodes.pop();
+        if (!availableNode[topNode.first] ||
+            topNode.second != 1LL * inDegree[topNode.first].size() * outDegree[topNode.first].size()) {
+            continue;
         }
+        cout << topNode.first << ' ' << topNode.second << '\n';
+        eraseNode(topNode.first);
+        doBasicReductions();
+        feedbackVertexSet.insert(topNode.first);
     }
     cout << candidatesNodes.size() << ' ' << edges.size() << '\n';
+    cout << feedbackVertexSet.size() << '\n';
+    out << feedbackVertexSet.size() << '\n';
+    for (auto it: feedbackVertexSet) {
+        out << it << ' ';
+    }
 }
 
 void solveTestcase(const string &pathInput, const string &pathOutput) {
@@ -212,6 +258,10 @@ void solveTestcase(const string &pathInput, const string &pathOutput) {
             availableNodes.push(make_pair(i, 1LL * inDegree[i].size() * outDegree[i].size()));
         }
     }
+    int solMax = 0;
+    for (auto it : candidatesNodes) {
+        solMax = max(1LL * solMax, 1LL * inDegree[it].size() * outDegree[it].size());
+    }
     findDFVS();
     clearSets();
     in.close();
@@ -222,7 +272,7 @@ void solveTestcase(const string &pathInput, const string &pathOutput) {
 signed main() {
     srand(0);
     vector<int> tests;
-    tests.emplace_back(1);
+    tests.emplace_back(199);
     string pathInput = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
     string pathOutput = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
     for (auto i : tests) {
