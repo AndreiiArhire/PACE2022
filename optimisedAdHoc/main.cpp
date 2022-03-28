@@ -11,12 +11,13 @@ struct cmp {
 priority_queue<pair<int, long long>, vector<pair<int, long long>>, cmp> availableNodes;
 
 clock_t begin_;
-int n, m;
+int n, m, sccIndex, sccCounter;
 vector<set<int>> inDegree, outDegree;
 set<pair<int, int> > edges;
 set<int> candidatesNodes, feedbackVertexSet;
 vector<int> selfLoopNodes, zeroDegreeNodes, oneDegreeNodes;
-vector<bool> availableNode;
+vector<int> lowLevel, sccStack, currLevel, whichSCC;
+vector<bool> availableNode, inStack;
 
 
 bool checkNodeCanBeReduced(int node) {
@@ -59,12 +60,14 @@ void addEdge(int x, int y) {
 
 
 void initializeSets() {
+    whichSCC.resize(n + 1, 0);
     availableNode.resize(n + 1, true);
     inDegree.resize(n + 1, set<int>());
     outDegree.resize(n + 1, set<int>());
 }
 
 void clearSets() {
+    whichSCC.clear();
     feedbackVertexSet.clear();
     availableNode.clear();
     selfLoopNodes.clear();
@@ -153,15 +156,6 @@ void bypassNode(int node) {
         }
     }
 
-    /*
-    for (auto it1 : inNodes) {
-        availableNodes.push(make_pair(it1, 1LL * inDegree[it1].size() * outDegree[it1].size()));
-    }
-    for (auto it2 : outNodes) {
-        availableNodes.push(make_pair(it2, 1LL * inDegree[it2].size() * outDegree[it2].size()));
-    }
-    */
-
     if (inNodes.size() == 1) {
         availableNodes.push(
                 make_pair(inNodes.back(), 1LL * inDegree[inNodes.back()].size() * outDegree[inNodes.back()].size()));
@@ -171,14 +165,56 @@ void bypassNode(int node) {
                 make_pair(outNodes.back(), 1LL * inDegree[outNodes.back()].size() * outDegree[outNodes.back()].size()));
     }
 
-    /*
-    for (auto it : inNodes) {
-        checkNodeCanBeReduced(it);
+}
+
+void doTarjan(int node) {
+    lowLevel[node] = ++sccIndex;
+    currLevel[node] = sccIndex;
+    inStack[node] = true;
+    sccStack.emplace_back(node);
+    for (auto it : outDegree[node]) {
+        if (!currLevel[it]) {
+            doTarjan(it);
+            lowLevel[node] = min(lowLevel[node], lowLevel[it]);
+        } else {
+            if (inStack[it]) {
+                lowLevel[node] = min(lowLevel[node], lowLevel[it]);
+            }
+        }
     }
-    for (auto it : outNodes) {
-        checkNodeCanBeReduced(it);
+    if (lowLevel[node] == currLevel[node]) {
+        ++sccCounter;
+        int *currNode = new int;
+        *currNode = -1;
+        while (*currNode != node) {
+            *currNode = sccStack.back();
+            sccStack.pop_back();
+            inStack[*currNode] = false;
+            whichSCC[*currNode] = sccCounter;
+        }
     }
-    */
+}
+
+void reduceSCC() {
+    sccIndex = 0;
+    sccCounter = 0;
+    cout << "***" << n << '\n';
+    lowLevel.resize(n + 1, 0);
+    currLevel.resize(n + 1, 0);
+    inStack.resize(n + 1, false);
+    for (auto it : candidatesNodes) {
+        if (!currLevel[it]) {
+            cout << it << '\n';
+            doTarjan(it);
+        }
+    }
+    cout << sccCounter << '\n';
+    sccIndex = 0;
+    sccCounter = 0;
+    lowLevel.clear();
+    currLevel.clear();
+    inStack.clear();
+    sccStack.clear();
 }
 
 void doBasicReductions() {
@@ -213,10 +249,16 @@ void doBasicReductions() {
     }
 }
 
-ofstream out(R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test199.out)");
+int testNo;
+string path = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test-)";
 
 void findDFVS() {
+    string file = path + to_string(testNo) + ".out";
+    ofstream out(file);
     doBasicReductions();
+    cout << "--" << edges.size() << '\n';
+   // reduceSCC(); STACK OVERFLOW
+    cout << "--" << edges.size() << '\n';
     while (!availableNodes.empty()) {
         pair<int, long long> topNode = availableNodes.top();
         availableNodes.pop();
@@ -224,17 +266,16 @@ void findDFVS() {
             topNode.second != 1LL * inDegree[topNode.first].size() * outDegree[topNode.first].size()) {
             continue;
         }
-        cout << topNode.first << ' ' << topNode.second << '\n';
         eraseNode(topNode.first);
         doBasicReductions();
         feedbackVertexSet.insert(topNode.first);
     }
-    cout << candidatesNodes.size() << ' ' << edges.size() << '\n';
     cout << feedbackVertexSet.size() << '\n';
     out << feedbackVertexSet.size() << '\n';
     for (auto it: feedbackVertexSet) {
         out << it << ' ';
     }
+    out.close();
 }
 
 void solveTestcase(const string &pathInput, const string &pathOutput) {
@@ -258,10 +299,6 @@ void solveTestcase(const string &pathInput, const string &pathOutput) {
             availableNodes.push(make_pair(i, 1LL * inDegree[i].size() * outDegree[i].size()));
         }
     }
-    int solMax = 0;
-    for (auto it : candidatesNodes) {
-        solMax = max(1LL * solMax, 1LL * inDegree[it].size() * outDegree[it].size());
-    }
     findDFVS();
     clearSets();
     in.close();
@@ -272,10 +309,13 @@ void solveTestcase(const string &pathInput, const string &pathOutput) {
 signed main() {
     srand(0);
     vector<int> tests;
-    tests.emplace_back(199);
+    for (int i = 199; i < 200; i += 2) {
+        tests.emplace_back(i);
+    }
     string pathInput = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
     string pathOutput = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
     for (auto i : tests) {
+        testNo = i;
         int currTestcase = i;
         begin_ = clock();
         cout << "test " << currTestcase << " began\n";
