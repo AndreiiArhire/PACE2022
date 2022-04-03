@@ -116,6 +116,8 @@ bool erase_SCC_edges() {
             ret = true;
         }
     }
+    cout << "--" << nr_ctc << '\n';
+    cout << "**" << to_be_erased.size() << '\n';
     ret |= (bool) (to_be_erased.size());
     for (auto it : to_be_erased) {
         erase_edge(it.first, it.second);
@@ -329,25 +331,25 @@ void loop() {
         change |= erase_0in_out_degree_nodes();
         change |= erase_1in_out_degree_nodes();
         if (edges.size() < 5e3) {
-            change |= erase_DOM_edges();
+            //change |= erase_DOM_edges();
         }
     }
 }
 
 void contract_graph() {
     /*O(N(N+M)lgN*/
+    //loop();
+    // if (candidates_nodes.size() < 3e4) { /// prevention to not stack overflow
+    /// if EXIT CODE 0xC00000FD then comment the line below
+    erase_SCC_edges();
     loop();
-   // if (candidates_nodes.size() < 3e4) { /// prevention to not stack overflow
-        /// if EXIT CODE 0xC00000FD then comment the line below
-        erase_SCC_edges();
-        loop();
     //}
-    erase_CORE_nodes();
-    loop();
+    // erase_CORE_nodes();
+    //loop();
     //if (edges.size() < 5e3) {
-        erase_DOM_edges();
+    //erase_DOM_edges();
     //}
-    loop();
+    // loop();
 }
 
 
@@ -404,9 +406,8 @@ void ad_hoc(int type) {
     while (!candidates_nodes.empty()) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-        if (elapsed_secs >= 20 - 5) {
+        if (elapsed_secs >= 300 - 5) {
             /*abort mision*/
-            cout << "ad_hoc stopped!\n";
             for (int i = 1; i <= n; ++i) {
                 feedback_vertex_set.insert(i);
             }
@@ -488,9 +489,8 @@ void compute_markov(vector<int> list_of_nodes) {
     candidates_nodes = ctc[0];
     clock_t end_ = clock();
     double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-    if (elapsed_secs >= 20 - 5) {
+    if (elapsed_secs >= 300 - 5) {
         /*abort mision*/
-        cout << "ad_hoc stopped!\n";
         for (int i = 1; i <= n; ++i) {
             feedback_vertex_set.insert(i);
         }
@@ -725,14 +725,13 @@ int solve_() {
 void try_to(int type) {
     clock_t end_ = clock();
     double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-    if (elapsed_secs >= 20 - 5) {
+    if (elapsed_secs >= 300 - 5) {
         return;
     }
     for (int i = 1; i <= n; ++i) {
         candidates_nodes.emplace_back(i);
     }
     contract_graph();
-    cout << candidates_nodes.size() << ' ' << feedback_vertex_set.size() << '\n';
     vector<int> ap(n + 2, 0);
     for (auto it : fvs) {
         ap[it] = 1;
@@ -783,7 +782,7 @@ void try_to(int type) {
         st.clear();
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-        if (elapsed_secs >= 20 - 5) {
+        if (elapsed_secs >= 300 - 5) {
             break;
         }
     }
@@ -913,6 +912,8 @@ void find_fvs() {
             }
         }
     }
+    cout << feedback_vertex_set.size() << '\n';
+    exit(0);
     fvs = feedback_vertex_set;
     for (int i = 0; i <= n; ++i) {
         v_[i].clear();
@@ -944,34 +945,62 @@ void find_fvs() {
 }
 
 void testcase(const string &p_in, const string &p_out) {
-    markov_count = 0;
-    ifstream in(p_in);
-    ofstream out(p_out);
-    int x, y;
-    in >> init_n >> init_m;
-    if (init_n == 0) {
-        // empty testcase
-        return;
+    int t, edges_ = 0;
+    string s;
+    while (getline(cin, s)) {
+        deque<char> input;
+        for (auto it : s) {
+            input.push_back(it);
+        }
+        while (!input.empty() && input.front() == ' ') {
+            input.pop_front();
+        }
+        s.clear();
+        for (char i : input) {
+            s.push_back(i);
+        }
+        if (s.empty() || s[0] == '%') continue;
+        istringstream is(s);
+        is >> init_n >> init_m >> t;
+        n = init_n;
+        m = init_m;
+        break;
     }
-    n = init_n;
-    m = init_m;
+    int x, y;
     set_size();
-    for (int i = 1; i <= m; ++i) {
-        in >> x >> y;
-        add_edge(x, y);
-        v_[x].push_back(y);
-        v_t_[y].push_back(x);
-        curr_edges.emplace_back(x, y);
+    for (int j = 1; j <= n; ++j) {
+        getline(cin, s);
+        deque<char> input;
+        for (auto it : s) {
+            input.push_back(it);
+        }
+        while (!input.empty() && input.front() == ' ') {
+            input.pop_front();
+        }
+        s.clear();
+        for (char i : input) {
+            s.push_back(i);
+        }
+        if (!s.empty() && s[0] == '%') {
+            j--;
+            continue;
+        }
+        istringstream is(s);
+        while (is >> t) {
+            add_edge(j, t);
+            v_[j].push_back(t);
+            v_t_[t].push_back(j);
+            curr_edges.emplace_back(j, t);
+        }
     }
     for (int i = 1; i <= n; ++i) {
         candidates_nodes.emplace_back(i);
     }
     find_fvs();
-    cout << "-1--" << best_fvs.size() << '\n';
     for (current_iteration = 1;; ++current_iteration) {
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-        if (elapsed_secs >= 20 - 5) {
+        if (elapsed_secs >= 300 - 5) {
             break;
         }
         n = init_n;
@@ -1017,25 +1046,21 @@ void testcase(const string &p_in, const string &p_out) {
         }
         find_fvs();
         if (best_fvs.empty()) break;
-        cout << "--" << best_fvs.size() << ' ' << current_iteration << '\n';
     }
-    cout << "--" << best_fvs.size() << '\n';
-    out << best_fvs.size() << '\n';
-    cout << best_fvs.size() << '\n';
-    for (auto it : best_fvs) out << it << ' ';
-    out << '\n';
+    // cout << best_fvs.size() << '\n';
+    for (auto it : best_fvs) cout << it << '\n';
+    // cout << '\n';
     curr_edges.clear();
     best_fvs.clear();
-    in.close();
-    out.close();
 }
 
 
 signed main() {
-    srand(0);
+    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
+    srand(seed1);
     vector<int> tests;
     //tests.emplace_back(10);
-    for (int i = 49; i <= 49; ++i) {
+    for (int i = 1; i <= 101; ++i) {
         tests.emplace_back(i);
     }
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
@@ -1043,12 +1068,12 @@ signed main() {
     for (auto i : tests) {
         curr_testcase = i;
         begin_ = clock();
-        cout << "test " << curr_testcase << " began\n";
+        // cout << "test " << curr_testcase << " began\n";
         testcase(path_input + to_string(curr_testcase) + ".in", path_output + to_string(curr_testcase) + ".out");
-        cout << "test " << curr_testcase << " finished\n";
+        //  cout << "test " << curr_testcase << " finished\n";
         clock_t end_ = clock();
         double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-        cout << "time elapsed in seconds: " << elapsed_secs << '\n';
+        //   cout << "time elapsed in seconds: " << elapsed_secs << '\n';
     }
     return 0;
 }

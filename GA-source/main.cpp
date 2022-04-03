@@ -530,7 +530,8 @@ void run_GA() {
                 }
             }
             auto male = best_males[male_index];
-            auto female = best_females[female_index];
+            //auto female = best_females[female_index];
+            auto female = best_males[female_index];
             vector<int> offspring(male_population[male.first].size());
             for (int i = 0; i < offspring.size() - 2; ++i) {
                 offspring[i] =
@@ -574,7 +575,7 @@ void run_GA() {
                 break;
             }
         }
-        for (int i = 0; new_best_males.size() < initial_population_size; ++i) {
+        for (int i = 0; i < male_population.size(); ++i) {
             new_best_males.emplace_back(best_males[i]);
             new_male_population.emplace_back(male_population[best_males[i].first]);
         }
@@ -656,7 +657,7 @@ signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)";
-    for (int t = 7; t <= 7; ++t) {
+    for (int t = 67; t <= 67; ++t) {
         c_start = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");

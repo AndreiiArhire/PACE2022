@@ -7,7 +7,7 @@ set<pair<int, int>> edges;
 vector<vector<int>> ctc;
 const int NR_SECONDS = 600 - 5;
 vector<int> used, ctc_ind, st, used_pie, not_piv, individual_gene;
-int n, nr_ctc, m, initial_population_size = 200, number_of_generations = 20, number_of_offsprings = 2000;
+int n, nr_ctc, m, initial_population_size = 200, number_of_generations = 300, number_of_offsprings = 2000;
 time_t c_start;
 set<int> candidates_nodes_set;
 vector<int> candidates_nodes, posInCandidatesNodes;
@@ -613,9 +613,9 @@ void run_GA() {
     cout << "\n\n";
     */
     for (int gen = 1; gen <= number_of_generations; ++gen) {
-        vector<vector<int>> newFemaleGeneration = femaleInitialGeneration, newMaleGeneration = maleInitialGeneration;
+        vector<vector<int>> newFemaleGeneration = femaleInitialGeneration, newFemaleGeneration2 = maleInitialGeneration, newMaleGeneration = maleInitialGeneration;
         set<vector<int>> newFemaleGenerationSet, newMaleGenerationSet;
-        vector<pair<int, int>> newFemalePopulation = femalePopulation, newMalePopulation;
+        vector<pair<int, int>> newFemalePopulation = femalePopulation, newMalePopulation = malePopulation;
         cout << gen << ' ' << femalePopulation[0].second << ' ' << malePopulation[0].second << '\n';
         for (int k = 1; k <= number_of_offsprings; ++k) {
             double rand_males = ((double) rand() / (RAND_MAX));
@@ -638,8 +638,9 @@ void run_GA() {
                     break;
                 }
             }
-            auto male = femalePopulation[male_index];
-            auto female = malePopulation[female_index];
+            auto male = malePopulation[male_index];
+            auto female = femalePopulation[female_index];
+            //auto female = malePopulation[female_index];
             vector<int> offspring(maleInitialGeneration[male.first].size());
             for (int i = 0; i < offspring.size() - 2; ++i) {
                 offspring[i] =
@@ -763,7 +764,7 @@ signed main() {
     srand(0);
     string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
     string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\GA-results2\grader_test)";
-    for (int t = 49; t <= 49; ++t) {
+    for (int t = 67; t <= 67; ++t) {
         c_start = clock();
         cout << "test " << t << " began\n";
         testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");

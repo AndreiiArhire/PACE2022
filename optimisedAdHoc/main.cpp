@@ -257,7 +257,7 @@ void findDFVS() {
     ofstream out(file);
     doBasicReductions();
     cout << "--" << edges.size() << '\n';
-   // reduceSCC(); STACK OVERFLOW
+    reduceSCC(); //STACK OVERFLOW
     cout << "--" << edges.size() << '\n';
     while (!availableNodes.empty()) {
         pair<int, long long> topNode = availableNodes.top();
@@ -267,6 +267,7 @@ void findDFVS() {
             continue;
         }
         eraseNode(topNode.first);
+        reduceSCC();
         doBasicReductions();
         feedbackVertexSet.insert(topNode.first);
     }
@@ -309,7 +310,7 @@ void solveTestcase(const string &pathInput, const string &pathOutput) {
 signed main() {
     srand(0);
     vector<int> tests;
-    for (int i = 199; i < 200; i += 2) {
+    for (int i = 191; i <= 191; i += 2) {
         tests.emplace_back(i);
     }
     string pathInput = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)";
