@@ -3,51 +3,96 @@
 using namespace std;
 
 vector<int> sol;
-vector<int> v_t[1000001], ctc[1000001], st, v[1000001];
+vector<int> ctc[1000001], st;
 int used[1000001], nrctc, n, m;
-vector<bool> bad(1000000, true);
+vector<int> bad;
+vector<int> lowLevel, sccStack, currLevel, whichSCC;
+vector<pair<pair<int, set<int>::iterator>, int> > stackTarjan;
+vector<bool> inStack;
+vector<vector<int>> scc;
+vector<set<int>> outDegree;
+vector<set<int>> inDegree;
+int sccIndex, sccCounter;
 
-void dfs(int nod) {
-    used[nod] = 1;
-    for (int vecin : v[nod]) {
-        if (!used[vecin] && !bad[vecin]) dfs(vecin);
+
+void runTarjan(int node) {
+    stackTarjan.emplace_back(make_pair(node, outDegree[node].begin()), 0);
+    for (; !stackTarjan.empty();) {
+        if (stackTarjan.back().second) {
+            lowLevel[stackTarjan.back().first.first] = min(lowLevel[stackTarjan.back().first.first],
+                                                           lowLevel[*stackTarjan.back().first.second]);
+            stackTarjan.back().first.second++;
+        }
+        if (stackTarjan.back().first.second == outDegree[stackTarjan.back().first.first].begin() &&
+            !stackTarjan.back().second) {
+            lowLevel[stackTarjan.back().first.first] = ++sccIndex;
+            currLevel[stackTarjan.back().first.first] = sccIndex;
+            inStack[stackTarjan.back().first.first] = true;
+            sccStack.emplace_back(stackTarjan.back().first.first);
+        }
+        if (stackTarjan.back().first.second != outDegree[stackTarjan.back().first.first].end()) {
+            if (!currLevel[*stackTarjan.back().first.second]) {
+                stackTarjan.back().second = 1;
+                stackTarjan.emplace_back(make_pair(*stackTarjan.back().first.second,
+                                                   outDegree[*stackTarjan.back().first.second].begin()), 0);
+                continue;
+            } else {
+                if (inStack[*stackTarjan.back().first.second]) {
+                    lowLevel[stackTarjan.back().first.first] = min(lowLevel[stackTarjan.back().first.first],
+                                                                   lowLevel[*stackTarjan.back().first.second]);
+                }
+                stackTarjan.back().first.second++;
+                stackTarjan.back().second = 0;
+                continue;
+            }
+        } else {
+            if (lowLevel[stackTarjan.back().first.first] == currLevel[stackTarjan.back().first.first]) {
+                ++sccCounter;
+                int currNode = -1;
+                while (currNode != stackTarjan.back().first.first) {
+                    currNode = sccStack.back();
+                    sccStack.pop_back();
+                    inStack[currNode] = false;
+                    whichSCC[currNode] = sccCounter;
+                    scc[sccCounter].emplace_back(currNode);
+                }
+            }
+            stackTarjan.pop_back();
+        }
     }
-    st.emplace_back(nod);
 }
 
-void dfs_t(int nod) {
-    used[nod] = 2;
-    for (int vecin : v_t[nod]) {
-        if (used[vecin] != 2 && !bad[vecin]) dfs_t(vecin);
-    }
-    ctc[nrctc].emplace_back(nod);
-}
 
-void solve() {
-    int cnt = 0;
+void reduceSCC() {
+    sccIndex = 0;
+    sccCounter = 0;
+    scc.resize(n + 1, vector<int>());
+    whichSCC.resize(n + 1, 0);
+    lowLevel.resize(n + 1, 0);
+    currLevel.resize(n + 1, 0);
+    inStack.resize(n + 1, false);
     for (int i = 1; i <= n; ++i) {
-        if (!used[i] && !bad[i]) {
-            ++cnt;
-            dfs(i);
+        if (!currLevel[i]) {
+            runTarjan(i);
         }
     }
-    while (!st.empty()) {
-        int nod = st.back();
-        if (used[nod] != 2 && !bad[nod]) dfs_t(nod), ++nrctc;
-        st.pop_back();
+    if (n != sccCounter) {
+        cout << "-1\n";
+        exit(0);
     }
-    for (int i = 0; i < nrctc; ++i) {
-        if (ctc[i].size() != 1) {
-            cout << "!!!\n";
-            exit(0);
-        }
-    }
+    sccIndex = 0;
+    sccCounter = 0;
+    lowLevel.clear();
+    currLevel.clear();
+    inStack.clear();
+    sccStack.clear();
 }
 
 signed main() {
-    for (int t = 115; t <= 115; ++t) {
+    inDegree.resize(1000000, set<int>());
+    outDegree.resize(1000000, set<int>());
+    for (int t = 191; t <= 191; t += 2) {
         bad.clear();
-        bad.resize(1000005, false);
         cout << "test " << t << " started\n";
         string path_in =
                 R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)" +
@@ -65,24 +110,30 @@ signed main() {
         cout << "..." << n << '\n';
         for (int i = 1; i <= n; ++i) {
             in >> x;
-            bad[x] = true;
+            bad.emplace_back(x);
         }
         in.close();
         in2 >> n >> m;
         for (int i = 1; i <= m; ++i) {
             in2 >> x >> y;
             if (used[x] || used[y]) continue;
-            v[x].push_back(y);
-            v_t[y].push_back(x);
+            outDegree[x].insert(y);
+            inDegree[y].insert(x);
+        }
+        for (auto it : bad) {
+            for (auto it2 : inDegree[it]) {
+                outDegree[it2].erase(it);
+            }
+            outDegree[it].clear();
         }
 
-        solve();
+        reduceSCC();
         cout << "test " << t << " finished  ";
         cout << ":)\n";
         sol.clear();
         for (int i = 0; i <= n; ++i) {
-            v[i].clear();
-            v_t[i].clear();
+            inDegree[i].clear();
+            outDegree[i].clear();
             ctc[i].clear();
             used[i] = false;
         }

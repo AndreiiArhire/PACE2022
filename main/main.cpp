@@ -1,526 +1,639 @@
 #include <bits/stdc++.h>
 
 using namespace std;
+const int SECONDS = 600;
 
-set<pair<int, int>> edges;
-vector<vector<int>> ctc;
-vector<int> used, ctc_ind, st, used_pie, not_piv, individual_gene;
-int n, nr_ctc, m;
-vector<vector<int>> male_population, female_population;
-vector<int> candidates_nodes, best_female_chromosome;
-vector<set<int>> in_degree, out_degree;
-set<int> feedback_vertex_set, fvs;
-vector<int> feedback_vertex_set_vector, feedback_vertex_set_vector2;
-vector<double> phi_males, phi_females, probability_males, probability_females;
-vector<double> priority;
+struct cmp {
+    bool inline operator()(const pair<int, long long> &i, const pair<int, long long> &j) {
+        return i.second < j.second || (i.second == j.second && i.first < j.first);
+    }
+};
+
+priority_queue<pair<int, long long>, vector<pair<int, long long>>, cmp> availableNodes;
 clock_t begin_;
+int n, m, fitnessType, sccIndex, sccCounter;
+int testNo;
 
-void add_edge(int x, int y) {
-    /*O(lgN)*/
-    edges.insert(make_pair(x, y));
-    in_degree[y].insert(x);
-    out_degree[x].insert(y);
+vector<set<int>> inDegree, outDegree;
+vector<set<int>> inDegreeReduced, outDegreeReduced;
+set<pair<int, int> > edges;
+set<pair<int, int> > edgesReduced;
+set<int> candidatesNodes, feedbackVertexSet, bestFeedbackVertexSet;
+set<int> feedbackVertexSetReduced;
+vector<int> selfLoopNodes, zeroDegreeNodes, oneDegreeNodes;
+vector<bool> availableNode, inStack;
+vector<bool> availableNodeReduced;
+set<int> feedbackVertexSetLocalSearch;
+vector<int> feedbackVertexSetList;
+vector<int> lowLevel, sccStack, currLevel, whichSCC;
+vector<pair<pair<int, set<int>::iterator>, int> > stackTarjan;
+set<int> cliqueCORE;
+vector<bool> visited;
+vector<int> candidatesSorted;
+vector<int> posInCandidatesNodesCORE;
+vector<pair<int, int>> toBeErasedSCC;
+vector<int> posInCandidatesNodesSCC;
+
+void checkTime() {
+    clock_t end_ = clock();
+    double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
+    if (elapsed_secs >= SECONDS - 15) {
+        for (auto it: feedbackVertexSetReduced) {
+            bestFeedbackVertexSet.insert(it);
+        }
+        string path_output =
+                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
+        ofstream out(path_output);
+        cout << bestFeedbackVertexSet.size() << '\n';
+        out << bestFeedbackVertexSet.size() << '\n';
+        for (auto node : bestFeedbackVertexSet) {
+            out << node << '\n';
+        }
+        out.close();
+        cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
+        exit(0);
+    }
 }
 
-void erase_edge(int x, int y) {
-    /*O(lgN)*/
+long long getFitness(int node) {
+    if (fitnessType == 1) {
+        return 1LL * inDegree[node].size() * outDegree[node].size();
+    }
+    if (fitnessType == 2) {
+        return inDegree[node].size() + outDegree[node].size() -
+               3 * abs(((int) inDegree[node].size()) - ((int) outDegree[node].size())) / 10;
+    }
+    if (fitnessType == 3) {
+        return inDegree[node].size() + outDegree[node].size() -
+               0 * abs(((int) inDegree[node].size()) - ((int) outDegree[node].size())) / 10;
+    }
+    if (fitnessType == 4) {
+        return inDegree[node].size() + outDegree[node].size() -
+               4 * abs(((int) inDegree[node].size()) - ((int) outDegree[node].size())) / 10;
+    }
+    if (fitnessType == 5) {
+        return inDegree[node].size() + outDegree[node].size() -
+               1 * abs(((int) inDegree[node].size()) - ((int) outDegree[node].size())) / 10;
+    }
+    if (fitnessType == 6) {
+        return inDegree[node].size() + outDegree[node].size() -
+               2 * abs(((int) inDegree[node].size()) - ((int) outDegree[node].size())) / 10;
+    }
+    return 0;
+}
+
+bool checkNodeCanBeReduced(int node) {
+    if (!availableNode[node]) {
+        return false;
+    }
+    if (inDegree[node].empty() || outDegree[node].empty()) {
+        zeroDegreeNodes.emplace_back(node);
+        return true;
+    }
+    if (edges.count(make_pair(node, node))) {
+        selfLoopNodes.emplace_back(node);
+        return true;
+    }
+
+    if (inDegree[node].size() == 1 || outDegree[node].size() == 1) {
+        oneDegreeNodes.emplace_back(node);
+        return true;
+    }
+    return false;
+}
+
+void eraseEdge(int x, int y, int z) {
     edges.erase(make_pair(x, y));
-    in_degree[y].erase(x);
-    out_degree[x].erase(y);
+    outDegree[x].erase(y);
+    inDegree[y].erase(x);
+    if ((z == 1 || z == 3) && !checkNodeCanBeReduced(x)) {
+        availableNodes.push(make_pair(x, getFitness(x)));
+    }
+    if ((z == 2 || z == 3) && !checkNodeCanBeReduced(y)) {
+        availableNodes.push(make_pair(y, getFitness(y)));
+    }
 }
 
-void dfs(int nod) {
-    used[nod] = 1;
-    for (int i : out_degree[nod]) {
-        if (!used[i] && !in_degree[nod].count(i)) dfs(i);
-    }
-    st.emplace_back(nod);
-}
-
-void dfs_t(int nod) {
-    used[nod] = 2;
-    for (int i : in_degree[nod]) {
-        if (used[i] != 2 && !out_degree[nod].count(i)) dfs_t(i);
-    }
-    ctc_ind[nod] = nr_ctc;
-    ctc[nr_ctc].emplace_back(nod);
+void addEdge(int x, int y) {
+    edges.insert(make_pair(x, y));
+    inDegree[y].insert(x);
+    outDegree[x].insert(y);
 }
 
 
-bool erase_SCC_edges() {
-    /*O((N+M)lgN)*/
-    bool ret = false;
-    nr_ctc = 0;
-    ctc.clear();
-    ctc.resize(n + 1, vector<int>());
-    for (auto i : candidates_nodes) used[i] = 0;
-    for (auto i : candidates_nodes) if (!used[i]) dfs(i);
-    while (!st.empty()) {
-        int nod = st.back();
-        if (used[nod] != 2) dfs_t(nod), ++nr_ctc;
-        st.pop_back();
+void initializeSets() {
+    whichSCC.resize(n + 1, 0);
+    availableNode.resize(n + 1, true);
+    inDegree.resize(n + 1, set<int>());
+    outDegree.resize(n + 1, set<int>());
+}
+
+void clearSets() {
+    posInCandidatesNodesCORE.clear();
+    whichSCC.clear();
+    feedbackVertexSet.clear();
+    availableNode.clear();
+    selfLoopNodes.clear();
+    zeroDegreeNodes.clear();
+    oneDegreeNodes.clear();
+    while (!availableNodes.empty()) {
+        availableNodes.pop();
     }
-    vector<pair<int, int>> to_be_erased;
-    for (auto it : edges) {
-        if (edges.count(make_pair(it.second, it.first))) continue;
-        if (ctc_ind[it.first] != ctc_ind[it.second]) {
-            to_be_erased.emplace_back(it);
-            ret = true;
+    candidatesNodes.clear();
+    edges.clear();
+    inDegree.clear();
+    outDegree.clear();
+}
+
+vector<pair<pair<int, int>, int >> toBeErasedNode;
+
+void eraseNode(int node) {
+    if (!availableNode[node]) {
+        return;
+    }
+    availableNode[node] = false;
+    candidatesNodes.erase(node);
+    for (auto it : inDegree[node]) {
+        toBeErasedNode.emplace_back(make_pair(it, node), 1);
+    }
+    for (auto it : outDegree[node]) {
+        toBeErasedNode.emplace_back(make_pair(node, it), 2);
+    }
+    for (auto it : toBeErasedNode) {
+        eraseEdge(it.first.first, it.first.second, it.second);
+    }
+    toBeErasedNode.clear();
+}
+
+
+/*
+ * [] - [] - []
+ *      \  - []
+ */
+
+/*
+ *  [1] -  \
+ *   |     |
+ *  [2] - [3]
+ */
+vector<pair<pair<int, int>, int >> toBeErasedBypass;
+vector<int> inNodes, outNodes;
+
+void bypassNode(int node) {
+    if (!availableNode[node]) {
+        return;
+    }
+    if (edges.count(make_pair(node, node))) {
+        selfLoopNodes.emplace_back(node);
+        return;
+    }
+    if (inDegree[node].empty() || outDegree[node].empty()) {
+        zeroDegreeNodes.emplace_back(node);
+        return;
+    }
+    if (inDegree[node].size() != 1 && outDegree[node].size() != 1) {
+        return;
+    }
+    availableNode[node] = false;
+    candidatesNodes.erase(node);
+    for (auto it :inDegree[node]) {
+        toBeErasedBypass.emplace_back(make_pair(it, node), 0);
+        inNodes.emplace_back(it);
+    }
+    for (auto it :outDegree[node]) {
+        toBeErasedBypass.emplace_back(make_pair(node, it), 0);
+        outNodes.emplace_back(it);
+    }
+    for (auto it : toBeErasedBypass) {
+        eraseEdge(it.first.first, it.first.second, it.second);
+    }
+    toBeErasedBypass.clear();
+    for (auto it1 : inNodes) {
+        for (auto it2 : outNodes) {
+            if (edges.count(make_pair(it1, it2))) {
+                checkNodeCanBeReduced(it1);
+                availableNodes.push(make_pair(it1, getFitness(it1)));
+                checkNodeCanBeReduced(it2);
+                availableNodes.push(make_pair(it2, getFitness(it2)));
+            }
+            if (it1 == it2) {
+                edges.insert(make_pair(it1, it2));
+                selfLoopNodes.emplace_back(it1);
+            }
+            addEdge(it1, it2);
         }
     }
-    ret |= (bool) (to_be_erased.size());
-    for (auto it : to_be_erased) {
-        erase_edge(it.first, it.second);
+
+    if (inNodes.size() == 1) {
+        availableNodes.push(
+                make_pair(inNodes.back(), getFitness(inNodes.back())));
     }
-    return ret;
+    if (outNodes.size() == 1) {
+        availableNodes.push(
+                make_pair(outNodes.back(), getFitness(outNodes.back())));
+    }
+    inNodes.clear();
+    outNodes.clear();
 }
 
-void erase_node(int node) {
-    vector<pair<int, int>> to_be_erased;
-    for (auto it : in_degree[node]) {
-        to_be_erased.emplace_back(it, node);
-    }
-    for (auto it : out_degree[node]) {
-        to_be_erased.emplace_back(node, it);
-    }
-    for (auto it : to_be_erased) {
-        erase_edge(it.first, it.second);
-    }
-    feedback_vertex_set.insert(node);
-    feedback_vertex_set_vector.emplace_back(node);
-}
+void runTarjan(int node) {
+    stackTarjan.emplace_back(make_pair(node, outDegree[node].begin()), 0);
+    for (; !stackTarjan.empty();) {
+        checkTime();
+        if (stackTarjan.back().first.second == outDegree[stackTarjan.back().first.first].begin() &&
+            !stackTarjan.back().second) {
+            lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = ++sccIndex;
+            currLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = sccIndex;
+            inStack[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = true;
+            sccStack.emplace_back(stackTarjan.back().first.first);
+        }
 
-bool erase_self_loop_nodes() {
-    /*O((N+M)lgN)*/
-    bool ret = false;
-    vector<int> new_candidates_nodes;
-    for (auto i : candidates_nodes) {
-        if (!edges.count(make_pair(i, i))) {
-            new_candidates_nodes.emplace_back(i);
+        if (stackTarjan.back().first.second != outDegree[stackTarjan.back().first.first].end() &&
+            edges.count(make_pair(*stackTarjan.back().first.second, stackTarjan.back().first.first))) {
+            stackTarjan.back().first.second++;
             continue;
         }
-        vector<pair<int, int>> to_be_erased;
-        feedback_vertex_set.insert(i);
-        feedback_vertex_set_vector.emplace_back(i);
-        for (auto it : in_degree[i]) {
-            to_be_erased.emplace_back(it, i);
-        }
-        for (auto it : out_degree[i]) {
-            to_be_erased.emplace_back(i, it);
-        }
-        for (auto it : to_be_erased) {
-            erase_edge(it.first, it.second);
-        }
-    }
-    ret |= new_candidates_nodes.size() != candidates_nodes.size();
-    candidates_nodes = new_candidates_nodes;
-    return ret;
-}
 
-bool erase_0in_out_degree_nodes() {
-    /*O((N+M)lgN)*/
-    bool ret = false;
-    vector<int> new_candidates_nodes;
-    for (auto i : candidates_nodes) {
-        if (!in_degree[i].empty() && !out_degree[i].empty()) {
-            new_candidates_nodes.emplace_back(i);
+        if (stackTarjan.back().second &&
+            stackTarjan.back().first.second != outDegree[stackTarjan.back().first.first].end()) {
+            lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = min(
+                    lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]],
+                    lowLevel[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]);
+            stackTarjan.back().first.second++;
+            stackTarjan.back().second = 0;
             continue;
         }
-        vector<pair<int, int>> to_be_erased;
-        for (auto it : in_degree[i]) {
-            to_be_erased.emplace_back(it, i);
-        }
-        for (auto it : out_degree[i]) {
-            to_be_erased.emplace_back(i, it);
-        }
-        for (auto it : to_be_erased) {
-            erase_edge(it.first, it.second);
+
+        if (stackTarjan.back().first.second != outDegree[stackTarjan.back().first.first].end()) {
+            if (!currLevel[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]) {
+                stackTarjan.back().second = 1;
+                stackTarjan.emplace_back(make_pair(*stackTarjan.back().first.second,
+                                                   outDegree[*stackTarjan.back().first.second].begin()), 0);
+                continue;
+            } else {
+                if (inStack[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]) {
+                    lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = min(
+                            lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]],
+                            lowLevel[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]);
+                }
+                stackTarjan.back().first.second++;
+                stackTarjan.back().second = 0;
+                continue;
+            }
+        } else {
+            if (lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] ==
+                currLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]]) {
+                ++sccCounter;
+                int currNode = -1;
+                while (currNode != stackTarjan.back().first.first) {
+                    currNode = sccStack.back();
+                    sccStack.pop_back();
+                    inStack[posInCandidatesNodesSCC[currNode]] = false;
+                    whichSCC[currNode] = sccCounter;
+                }
+            }
+            stackTarjan.pop_back();
         }
     }
-    ret |= new_candidates_nodes.size() != candidates_nodes.size();
-    candidates_nodes = new_candidates_nodes;
-    return ret;
 }
 
-bool erase_1in_out_degree_nodes() {
-    /*O((N+M)lgN)*/
-    bool ret = false;
-    vector<int> new_candidates_nodes;
-    for (auto i : candidates_nodes) {
-        if ((in_degree[i].size() != 1 && out_degree[i].size() != 1) || edges.count(make_pair(i, i))) {
-            new_candidates_nodes.emplace_back(i);
-            continue;
-        }
-        vector<pair<int, int>> to_be_erased;
-        if (in_degree[i].size() == 1) {
-            int node = *in_degree[i].begin();
-            to_be_erased.emplace_back(node, i);
-            for (auto it : out_degree[i]) {
-                to_be_erased.emplace_back(i, it);
-            }
-            for (auto it : out_degree[i]) {
-                add_edge(node, it);
-            }
-        }
-        if (out_degree[i].size() == 1) {
-            int node = *out_degree[i].begin();
-            to_be_erased.emplace_back(i, node);
-            for (auto it : in_degree[i]) {
-                to_be_erased.emplace_back(it, i);
-            }
-            for (auto it : in_degree[i]) {
-                add_edge(it, node);
-            }
-        }
-        for (auto it : to_be_erased) {
-            erase_edge(it.first, it.second);
-        }
+
+void reduceCORE() {
+    if (posInCandidatesNodesCORE.empty()) {
+        posInCandidatesNodesCORE.resize(n + 1, 0);
     }
-    ret |= new_candidates_nodes.size() != candidates_nodes.size();
-    candidates_nodes = new_candidates_nodes;
-    return ret;
-}
-
-bool erase_CORE_nodes() {
-    /*O(NlgN+M)*/
-    bool ret = false;
-    for (auto i : candidates_nodes) not_piv[i] = 0;
+    visited.resize(candidatesNodes.size(), false);
+    int i = 0;
+    for (auto it : candidatesNodes) {
+        posInCandidatesNodesCORE[it] = i++;
+    }
     for (auto it : edges) {
         if (!edges.count(make_pair(it.second, it.first))) {
-            not_piv[it.first] = 1;
-            not_piv[it.second] = 1;
+            visited[posInCandidatesNodesCORE[it.first]] = true;
+            visited[posInCandidatesNodesCORE[it.second]] = true;
         }
     }
-    sort(candidates_nodes.begin(), candidates_nodes.end(), [](const int i, const int j) {
-        return in_degree[i].size() + out_degree[i].size() < in_degree[j].size() + out_degree[j].size();
+    candidatesSorted.reserve(candidatesNodes.size());
+    for (auto node : candidatesNodes) {
+        candidatesSorted.emplace_back(node);
+    }
+    sort(candidatesSorted.begin(), candidatesSorted.end(), [](const int i, const int j) {
+        return inDegree[i].size() + outDegree[i].size() < inDegree[j].size() + outDegree[j].size();
     });
-
-    for (auto it : candidates_nodes) {
-        if (not_piv[it]) continue;
-        set<int> clique;
-        clique.insert(it);
-        for (auto it2 : out_degree[it]) {
-            clique.insert(it2);
+    for (auto node : candidatesSorted) {
+        if (visited[posInCandidatesNodesCORE[node]]) continue;
+        cliqueCORE.insert(node);
+        for (auto it : outDegree[node]) {
+            cliqueCORE.insert(it);
         }
-        int is_core = 1;
-        for (auto it2 : clique) {
+        bool isCore = true;
+        for (auto it : cliqueCORE) {
             int sz = 1;
-            for (auto it3 : out_degree[it2]) {
-                if (clique.count(it3)) {
-                    sz++;
+            if (isCore) {
+                for (auto it3 : outDegree[it]) {
+                    if (it != it3 && cliqueCORE.count(it3)) {
+                        ++sz;
+                    }
+                }
+                if (sz != cliqueCORE.size()) {
+                    isCore = false;
                 }
             }
-            if (sz != clique.size()) {
-                is_core = 0;
-            }
-            not_piv[it2] = 1;
+            visited[posInCandidatesNodesCORE[it]] = false;
         }
-        vector<pair<int, int>> to_be_erased;
-        if (is_core == 1) {
-            for (auto it2 : clique) {
-                feedback_vertex_set.insert(it2);
-                feedback_vertex_set_vector.emplace_back(it2);
-                for (auto it3 : in_degree[it2]) {
-                    to_be_erased.emplace_back(it3, it2);
-                }
-                for (auto it3 : out_degree[it2]) {
-                    to_be_erased.emplace_back(it2, it3);
+        if (isCore) {
+            for (auto it : cliqueCORE) {
+                eraseNode(it);
+                if (it != node) {
+                    feedbackVertexSet.insert(it);
                 }
             }
-            feedback_vertex_set.erase(it);
-            feedback_vertex_set_vector.emplace_back(it);
         }
-        for (auto it2 : to_be_erased) {
-            erase_edge(it2.first, it2.second);
-        }
+        cliqueCORE.clear();
     }
-    vector<int> new_candidates_nodes;
-    for (auto i: candidates_nodes) {
-        if (!feedback_vertex_set.count(i)) {
-            new_candidates_nodes.emplace_back(i);
-        }
-    }
-    ret |= candidates_nodes.size() != new_candidates_nodes.size();
-    candidates_nodes = new_candidates_nodes;
-    return ret;
+    visited.clear();
+    candidatesSorted.clear();
 }
 
-bool erase_DOM_edges() {
-    /*O(N*M)*/
-    bool ret = false;
-    vector<pair<int, int>> to_be_erased;
+
+void reduceSCC() {
+    if (posInCandidatesNodesSCC.empty()) {
+        posInCandidatesNodesSCC.resize(n + 1, 0);
+    }
+    int i = 0;
+    for (auto it : candidatesNodes) {
+        posInCandidatesNodesSCC[it] = i++;
+    }
+    sccIndex = 0;
+    sccCounter = 0;
+    lowLevel.resize(candidatesNodes.size(), 0);
+    currLevel.resize(candidatesNodes.size(), 0);
+    inStack.resize(candidatesNodes.size(), false);
+    for (auto it : candidatesNodes) {
+        if (!currLevel[posInCandidatesNodesSCC[it]]) {
+            runTarjan(it);
+        }
+    }
     for (auto it : edges) {
-        int dome = 1;
-        for (auto node : in_degree[it.first]) {
-            if (!edges.count(make_pair(it.first, node)) && !edges.count(make_pair(node, it.second))) {
-                dome = 0;
-                break;
-            }
+        if (edges.count(make_pair(it.second, it.first))) continue;
+        if (whichSCC[it.first] != whichSCC[it.second]) {
+            toBeErasedSCC.emplace_back(it);
         }
-        if (!dome) {
-            dome = 1;
-            for (auto node : out_degree[it.second]) {
-                if (!edges.count(make_pair(node, it.second)) && !edges.count(make_pair(it.first, node))) {
-                    dome = 0;
-                    break;
-                }
-            }
-        }
-        if (dome) {
-            to_be_erased.emplace_back(it);
-        }
+        checkTime();
     }
-    ret |= (bool) (to_be_erased.size());
-    for (auto it : to_be_erased) {
-        edges.erase(it);
+    for (auto it : toBeErasedSCC) {
+        eraseEdge(it.first, it.second, 3);
     }
-    return ret;
+    toBeErasedSCC.clear();
+    sccIndex = 0;
+    sccCounter = 0;
+    lowLevel.clear();
+    currLevel.clear();
+    inStack.clear();
+    sccStack.clear();
 }
 
-void loop() {
+void doBasicReductions() {
+    checkTime();
     bool change = true;
     while (change) {
         change = false;
-        change |= erase_self_loop_nodes();
-        change |= erase_0in_out_degree_nodes();
-        change |= erase_1in_out_degree_nodes();
+        change |= !selfLoopNodes.empty();
+        while (!selfLoopNodes.empty()) {
+            int node = selfLoopNodes.back();
+            selfLoopNodes.pop_back();
+            if (!edges.count(make_pair(node, node))) {
+                continue;
+            }
+            eraseNode(node);
+            feedbackVertexSet.insert(node);
+        }
+        change |= !zeroDegreeNodes.empty();
+        while (!zeroDegreeNodes.empty()) {
+            int node = zeroDegreeNodes.back();
+            zeroDegreeNodes.pop_back();
+            if (!inDegree[node].empty() && !outDegree[node].empty()) {
+                continue;
+            }
+            eraseNode(node);
+        }
+        change |= !oneDegreeNodes.empty();
+        while (!oneDegreeNodes.empty()) {
+            int node = oneDegreeNodes.back();
+            oneDegreeNodes.pop_back();
+            bypassNode(node);
+        }
+    }
+    checkTime();
+}
+
+
+void findDFVS() {
+    doBasicReductions();
+    int edgesCount = edges.size();
+    while (!availableNodes.empty()) {
+        pair<int, long long> topNode = availableNodes.top();
+        availableNodes.pop();
+        if (!availableNode[topNode.first] ||
+            topNode.second != getFitness(topNode.first)) {
+            continue;
+        }
+        eraseNode(topNode.first);
+        doBasicReductions();
+        if (bestFeedbackVertexSet.size() == n && edges.size() < edgesCount * 4 / 5 &&
+            (double(clock() - begin_)) / CLOCKS_PER_SEC <= SECONDS - 130) {
+            edgesCount = edges.size();
+            reduceSCC();
+            doBasicReductions();
+            //reduceCORE();
+            //doBasicReductions();
+        }
+        feedbackVertexSet.insert(topNode.first);
+    }
+    if (bestFeedbackVertexSet.size() > feedbackVertexSet.size()) {
+        bestFeedbackVertexSet = feedbackVertexSet;
     }
 }
 
-void contract_graph() {
-    /*O(N(N+M)lgN*/
-    loop();
-    erase_SCC_edges();
-    loop();
-    erase_CORE_nodes();
-    loop();
-    //erase_DOM_edges();
-    //loop();
-}
+string s;
 
-
-void set_size() {
-    /*O(N*lgN)*/
-    nr_ctc = 0;
-    priority.resize(n + 1);
-    individual_gene.resize(n + 1, 0);
-    ctc.resize(n + 1, vector<int>());
-    in_degree.resize(n + 1, set<int>());
-    out_degree.resize(n + 1, set<int>());
-    used.resize(n + 1, 0);
-    not_piv.resize(n + 1, 0);
-    used_pie.resize(n + 1, 0);
-    ctc_ind.resize(n + 1);
-}
-
-void clear_sets() {
-    /*O(N*lgN)*/
-    priority.clear();
-    phi_females.clear();
-    phi_males.clear();
-    probability_females.clear();
-    probability_males.clear();
-    best_female_chromosome.clear();
-    individual_gene.clear();
-    male_population.clear();
-    female_population.clear();
-    edges.clear();
-    ctc.clear();
-    used.clear();
-    used_pie.clear();
-    ctc_ind.clear();
-    in_degree.clear();
-    out_degree.clear();
-    st.clear();
-    nr_ctc = 0;
-    candidates_nodes.clear();
-    in_degree.clear();
-    out_degree.clear();
-    feedback_vertex_set.clear();
-    feedback_vertex_set_vector.clear();
-    not_piv.clear();
-}
-
-void ad_hoc() {
+void readData() {
+    string path_input = R"(C:\Users\andre\OneDrive\Desktop\pace\heuristic_public\h_)";
+    for (int l = 1; l <= 3 - to_string(testNo).size(); ++l) {
+        path_input.push_back('0');
+    }
+    path_input += to_string(testNo);
+    ifstream in(path_input);
+    int t;
+    while (getline(in, s)) {
+        deque<char> input;
+        for (auto it : s) {
+            input.push_back(it);
+        }
+        while (!input.empty() && input.front() == ' ') {
+            input.pop_front();
+        }
+        s.clear();
+        for (char i : input) {
+            s.push_back(i);
+        }
+        if (s.empty() || s[0] == '%') continue;
+        istringstream is(s);
+        is >> n >> m >> t;
+        break;
+    }
+    initializeSets();
+    for (int j = 1; j <= n; ++j) {
+        getline(in, s);
+        deque<char> input;
+        for (auto it : s) {
+            input.push_back(it);
+        }
+        while (!input.empty() && input.front() == ' ') {
+            input.pop_front();
+        }
+        s.clear();
+        for (char i : input) {
+            s.push_back(i);
+        }
+        if (!s.empty() && s[0] == '%') {
+            j--;
+            continue;
+        }
+        istringstream is(s);
+        while (is >> t) {
+            addEdge(j, t);
+        }
+    }
     for (int i = 1; i <= n; ++i) {
-        candidates_nodes.emplace_back(i);
+        bestFeedbackVertexSet.insert(i);
     }
-    contract_graph();
-    int counter = 0;
-    while (!candidates_nodes.empty()) {
-        loop();
-        if (candidates_nodes.empty()) continue;
-        for (auto it : candidates_nodes) {
-            priority[it] = -(in_degree[it].size() * out_degree[it].size());
-        }
-        /*
-        for (auto it : candidates_nodes) {
-            priority[it] = -((double) in_degree[it].size() + out_degree[it].size() -
-                             0.3 * abs((double) in_degree[it].size() - out_degree[it].size()));
-        }
-        */
-        sort(candidates_nodes.begin(), candidates_nodes.end(),
-             [](int a, int b) { return priority[a] > priority[b]; });
-        int node;
-        for (int i = 1; i <= 1 + candidates_nodes.size() / 10000; ++i) {
-            node = candidates_nodes.back();
-            candidates_nodes.pop_back();
-            erase_node(node);
-            ++counter;
-        }
-
-        if (counter % 100 == 0) {
-            cout << candidates_nodes.size() << '\n';
-        }
+    in.close();
+    if (n == 0) {
+        // empty testcase
+        exit(0);
     }
-
 }
 
 
-vector<int> sol_;
-vector<int> v_t_[1000001], ctc_[1000001], st_, v_[1000001];
-int used_[1000001], nrctc_;
-vector<int> bad_;
-
-
-void dfs_(int nod) {
-    used_[nod] = 1;
-    for (int vecin : v_[nod]) {
-        if (!used_[vecin] && !bad_[vecin]) dfs_(vecin);
-    }
-    st_.emplace_back(nod);
-}
-
-void dfs_t_(int nod) {
-    used_[nod] = 2;
-    for (int vecin : v_t_[nod]) {
-        if (used_[vecin] != 2 && !bad_[vecin]) dfs_t_(vecin);
-    }
-    ctc_[nrctc_].emplace_back(nod);
-}
-
-int solve_() {
-    int cnt = 0;
+void createInitialDFVS() {
+    inDegree = inDegreeReduced;
+    outDegree = outDegreeReduced;
+    edges = edgesReduced;
+    availableNode = availableNodeReduced;
     for (int i = 1; i <= n; ++i) {
-        if (!used_[i] && !bad_[i]) {
-            ++cnt;
-            dfs_(i);
+        if (availableNode[i]) {
+            candidatesNodes.insert(i);
+            if (!checkNodeCanBeReduced(i)) {
+                availableNodes.push(make_pair(i, getFitness(i)));
+            }
         }
     }
-    while (!st_.empty()) {
-        int nod = st_.back();
-        if (used_[nod] != 2 && !bad_[nod]) dfs_t_(nod), ++nrctc_;
-        st_.pop_back();
-    }
-    for (int i = 0; i < nrctc_; ++i) {
-        if (ctc_[i].size() != 1) {
-            return 0;
-        }
-    }
-    return 1;
+    findDFVS();
+    feedbackVertexSetLocalSearch = feedbackVertexSet;
+    clearSets();
+    initializeSets();
 }
 
+void doLocalSearch() {
+    inDegree = inDegreeReduced;
+    outDegree = outDegreeReduced;
+    edges = edgesReduced;
+    availableNode = availableNodeReduced;
+    feedbackVertexSetList.clear();
+    for (auto node : feedbackVertexSetLocalSearch) {
+        feedbackVertexSetList.emplace_back(node);
+    }
 
-void try_to() {
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    shuffle(feedbackVertexSetList.begin(), feedbackVertexSetList.end(), std::default_random_engine(seed));
+    int size = feedbackVertexSetList.size();
+    int toBeErasedCounter = size / 2 + rand() % (size / 2 - size / 3 + 1);
+    while (toBeErasedCounter--) {
+        int node = feedbackVertexSetList.back();
+        feedbackVertexSetList.pop_back();
+        eraseNode(node);
+        doBasicReductions();
+        feedbackVertexSet.insert(node);
+    }
     for (int i = 1; i <= n; ++i) {
-        candidates_nodes.emplace_back(i);
-    }
-    contract_graph();
-    vector<int> ap(n + 2, 0);
-    for (auto it : fvs) {
-        ap[it] = 1;
-        erase_node(it);
-    }
-    vector<int> c2;
-    for (auto it : candidates_nodes) {
-        if (!ap[it]) {
-            c2.emplace_back(it);
+        if (availableNode[i]) {
+            candidatesNodes.insert(i);
+            if (!checkNodeCanBeReduced(i)) {
+                availableNodes.push(make_pair(i, getFitness(i)));
+            }
         }
     }
-    candidates_nodes = c2;
-    for (int ii = (int) feedback_vertex_set_vector2.size() - 1; ii >= 0; --ii) {
-        auto it2 = feedback_vertex_set_vector2[ii];
-        bad_.clear();
-        bad_.resize(n + 5, false);
-        for (auto it : fvs) {
-            bad_[it] = true;
-        }
-        bad_[it2] = false;
-        if (solve_()) {
-            fvs.erase(it2);
-        }
-        sol_.clear();
-        for (int i = 0; i <= n; ++i) {
-            ctc_[i].clear();
-            used_[i] = false;
-        }
-        nrctc_ = 0;
-        st.clear();
-        clock_t end_ = clock();
-        double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-        if (elapsed_secs >= 600 - 5) {
+    checkTime();
+    findDFVS();
+    if (feedbackVertexSet.size() < feedbackVertexSetLocalSearch.size()) {
+        feedbackVertexSetLocalSearch = feedbackVertexSet;
+    }
+    clearSets();
+    initializeSets();
+}
+
+void solveTestcase() {
+    begin_ = clock();
+    srand(0);
+    readData();
+    fitnessType = 1;
+    for (int i = 1; i <= n; ++i) {
+        checkNodeCanBeReduced(i);
+    }
+    for (int i = 1; i <= n; ++i) {
+        candidatesNodes.insert(i);
+    }
+    for (int i = 1; i <= 3; ++i) {
+        int last = edges.size();
+        reduceSCC();
+        doBasicReductions();
+        if (last - edges.size() < 1000) {
             break;
         }
     }
-}
-
-void testcase(const string &p_in, const string &p_out) {
-    ifstream in(p_in);
-    ofstream out(p_out);
-    int x, y;
-    in >> n >> m;
-    set_size();
-    for (int i = 1; i <= m; ++i) {
-        in >> x >> y;
-        add_edge(x, y);
+    checkTime();
+    reduceCORE();
+    checkTime();
+    candidatesNodes.clear();
+    inDegreeReduced = inDegree;
+    outDegreeReduced = outDegree;
+    feedbackVertexSetReduced = feedbackVertexSet;
+    edgesReduced = edges;
+    availableNodeReduced = availableNode;
+    feedbackVertexSet.clear();
+    for (; fitnessType <= 1; ++fitnessType) {
+        createInitialDFVS();
+        int lastActive = 1;
+        for (int i = 1;; ++i) {
+            int bestSize = bestFeedbackVertexSet.size();
+            doLocalSearch();
+            int currSize = bestFeedbackVertexSet.size();
+            if (bestSize != currSize) {
+                lastActive = i;
+            }
+            checkTime();
+        }
     }
-    ad_hoc();
-    fvs = feedback_vertex_set;
-    feedback_vertex_set_vector2 = feedback_vertex_set_vector;
-    cout << "--->" << feedback_vertex_set.size() << '\n';
-    clear_sets();
+    for (auto it: feedbackVertexSetReduced) {
+        bestFeedbackVertexSet.insert(it);
+    }
+    string path_output =
+            R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
+    ofstream out(path_output);
+    cout << bestFeedbackVertexSet.size() << '\n';
+    out << bestFeedbackVertexSet.size() << '\n';
+    for (auto it: bestFeedbackVertexSet) {
+        out << it << '\n';
+    }
     out.close();
-    in.close();
-    ifstream in2(p_in);
-    ofstream out2(p_out);
-    in2 >> n >> m;
-    set_size();
-    for (int i = 1; i <= m; ++i) {
-        in2 >> x >> y;
-        v_[x].push_back(y);
-        v_t_[y].push_back(x);
-        add_edge(x, y);
-    }
-    try_to();
-    cout << "--->" << fvs.size() << '\n';
-    out2 << fvs.size() << '\n';
-    for (auto it : fvs) out2 << it << ' ';
-    out2 << '\n';
-    fvs.clear();
-    feedback_vertex_set_vector2.clear();
-    clear_sets();
-    out2.close();
-    in2.close();
-    for (int i = 0; i <= n; ++i) {
-        v_[i].clear();
-        v_t_[i].clear();
-    }
 }
 
 
 signed main() {
-    srand(0);
-    string path_input = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\correct-testcases\grader_test)";
-    string path_output = R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)";
-    for (int t = 1; t <= 70; ++t) {
-        begin_ = clock();
-        cout << "test " << t << " began\n";
-        testcase(path_input + to_string(t) + ".in", path_output + to_string(t) + ".out");
-        cout << "test " << t << " finished\n";
-        clock_t end_ = clock();
-        double elapsed_secs = double(end_ - begin_) / CLOCKS_PER_SEC;
-        cout << "time elapsed in seconds: " << elapsed_secs << '\n';
+    for (testNo = 59; testNo <= 59; testNo += 2) {
+        //cout << testNo << ' ';
+        solveTestcase();
     }
-
     return 0;
 }
