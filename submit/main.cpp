@@ -19,9 +19,9 @@ vector<set<int>> inDegreeDouble, outDegreeDouble;
 vector<set<int>> inDegreeSimple, outDegreeSimple;
 vector<set<int>> inDegreeReducedDouble, outDegreeReducedDouble;
 vector<set<int>> inDegreeReducedSimple, outDegreeReducedSimple;
-set<pair<int, int> > edges;
-set<pair<int, int> > edgesReduced;
-set<int> candidatesNodes, feedbackVertexSet, bestFeedbackVertexSet;
+set<pair<int, int>> edges;
+set<pair<int, int>> edgesReduced;
+set<int> candidatesNodes, candidatesNodesReduced, feedbackVertexSet, bestFeedbackVertexSet;
 set<int> feedbackVertexSetReduced;
 vector<int> selfLoopNodes, zeroDegreeNodes, oneDegreeNodes;
 vector<bool> availableNode, inStack;
@@ -713,6 +713,7 @@ void readData() {
 
 
 void createInitialDFVS() {
+    candidatesNodes = candidatesNodesReduced;
     inDegreeSimple = inDegreeReducedSimple;
     inDegreeDouble = inDegreeReducedDouble;
     outDegreeSimple = outDegreeReducedSimple;
@@ -720,13 +721,9 @@ void createInitialDFVS() {
     edges = edgesReduced;
     availableNode = availableNodeReduced;
     checkTime();
-    for (int i = 1; i <= n; ++i) {
-        checkTime();
-        if (availableNode[i]) {
-            candidatesNodes.insert(i);
-            if (!checkNodeCanBeReduced(i)) {
-                availableNodes.push(make_pair(i, getFitness(i)));
-            }
+    for (auto i : candidatesNodes) {
+        if (!checkNodeCanBeReduced(i)) {
+            availableNodes.push(make_pair(i, getFitness(i)));
         }
     }
     checkTime();
@@ -737,6 +734,7 @@ void createInitialDFVS() {
 }
 
 void doLocalSearch() {
+    candidatesNodes = candidatesNodesReduced;
     inDegreeSimple = inDegreeReducedSimple;
     inDegreeDouble = inDegreeReducedDouble;
     outDegreeSimple = outDegreeReducedSimple;
@@ -760,13 +758,9 @@ void doLocalSearch() {
         doBasicReductions();
         feedbackVertexSet.insert(node);
     }
-    for (int i = 1; i <= n; ++i) {
-        checkTime();
-        if (availableNode[i]) {
-            candidatesNodes.insert(i);
-            if (!checkNodeCanBeReduced(i)) {
-                availableNodes.push(make_pair(i, getFitness(i)));
-            }
+    for (auto i : candidatesNodes) {
+        if (!checkNodeCanBeReduced(i)) {
+            availableNodes.push(make_pair(i, getFitness(i)));
         }
     }
     checkTime();
@@ -779,6 +773,7 @@ void doLocalSearch() {
 }
 
 void improveFeedbackVertexSet() {
+    candidatesNodes = candidatesNodesReduced;
     inDegreeSimple = inDegreeReducedSimple;
     inDegreeDouble = inDegreeReducedDouble;
     outDegreeSimple = outDegreeReducedSimple;
@@ -786,11 +781,9 @@ void improveFeedbackVertexSet() {
     edges = edgesReduced;
     availableNode = availableNodeReduced;
     feedbackVertexSetList.clear();
-    for (int i = 1; i <= n; ++i) {
+    for (auto i : candidatesNodes) {
         checkTime();
-        if (availableNode[i]) {
-            candidatesNodes.insert(i);
-        }
+        candidatesNodes.insert(i);
     }
     for (auto node : bestFeedbackVertexSet) {
         checkTime();
@@ -929,7 +922,7 @@ void solveTestcase() {
     doBasicReductions();
     reduceDOME();
     doBasicReductions();
-    candidatesNodes.clear();
+    candidatesNodesReduced = candidatesNodes;
     inDegreeReducedSimple = inDegreeSimple;
     inDegreeReducedDouble = inDegreeDouble;
     outDegreeReducedSimple = outDegreeSimple;
@@ -991,7 +984,7 @@ signed main() {
     cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
     return 0;
      */
-    for (testNo = 1; testNo <= 51; testNo += 2) {
+    for (testNo = 1; testNo <= 199; testNo += 2) {
         cout << testNo << ' ';
         solveTestcase();
     }
