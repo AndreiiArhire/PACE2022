@@ -2,7 +2,7 @@
 #include <chrono>
 
 using namespace std;
-const int SECONDS = 300;
+const int SECONDS = 600;
 
 struct cmp {
     bool inline operator()(const pair<int, long long> &i, const pair<int, long long> &j) {
@@ -49,11 +49,11 @@ void checkTime() {
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
     double sec = elapsed.count() * 1e-9;
-    if (sec >= SECONDS - 10) {
+    if (sec >= SECONDS - 60) {
         string path_output =
                 R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
         ofstream out(path_output);
-        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         for (auto it: feedbackVertexSetReduced) {
             output += to_string(it) + '\n';
             // bestFeedbackVertexSet.insert(it);
@@ -65,8 +65,8 @@ void checkTime() {
         ios_base::sync_with_stdio(false);
         cout.tie(nullptr);
         cout << output;
-        //out << output;
-        //cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
+        out << output;
+        cout << "time elapsed in seconds: " << getElapsed << '\n';
         //out.close();
         exit(0);
     }
@@ -611,14 +611,14 @@ void findDFVS() {
         }
         eraseNode(topNode.first);
         doBasicReductions();
-        if (edges.size() < edgesCount * 4 / 5 && getElapsed() < SECONDS - 20) {
+        if (edges.size() < edgesCount / 2 && getElapsed() < SECONDS - 90) {
             edgesCount = edges.size();
             reduceSCC();
-            if (getElapsed() < SECONDS - 30) {
+            if (getElapsed() < SECONDS - 120) {
                 doBasicReductions();
                 reduceCORE();
             }
-            if (getElapsed() < SECONDS - 30) {
+            if (getElapsed() < SECONDS - 150) {
                 doBasicReductions();
                 reduceDOME();
             }
@@ -641,7 +641,7 @@ void readData() {
     path_input += to_string(testNo);
     ifstream in(path_input);
     int t;
-    while (getline(cin, s)) {
+    while (getline(in, s)) {
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -660,7 +660,7 @@ void readData() {
     }
     initializeSets();
     for (int j = 1; j <= n; ++j) {
-        getline(cin, s);
+        getline(in, s);
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -967,7 +967,7 @@ signed main() {
     cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
     return 0;
      */
-    for (testNo = 13; testNo <= 13; testNo += 2) {
+    for (testNo = 191; testNo <= 191; testNo += 2) {
         solveTestcase();
     }
     return 0;
