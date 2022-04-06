@@ -34,6 +34,7 @@ set<int> cliqueCORE;
 vector<bool> visited;
 vector<int> candidatesSorted;
 vector<int> posInCandidatesNodesCORE;
+vector<int> posInCandidatesNodesSCC;
 string output;
 
 
@@ -53,7 +54,7 @@ void checkTime() {
         string path_output =
                 R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
         ofstream out(path_output);
-        out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         for (auto it: feedbackVertexSetReduced) {
             output += to_string(it) + '\n';
             // bestFeedbackVertexSet.insert(it);
@@ -65,8 +66,8 @@ void checkTime() {
         ios_base::sync_with_stdio(false);
         cout.tie(nullptr);
         cout << output;
-        out << output;
-        cout << "time elapsed in seconds: " << getElapsed << '\n';
+        //out << output;
+        //cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
         //out.close();
         exit(0);
     }
@@ -179,6 +180,7 @@ void initializeSets() {
 
 void clearSets() {
     checkTime();
+    posInCandidatesNodesSCC.clear();
     posInCandidatesNodesCORE.clear();
     whichSCC.clear();
     feedbackVertexSet.clear();
@@ -325,9 +327,9 @@ void runTarjan(int node) {
         checkTime();
         if (stackTarjan.back().first.second == outDegreeSimple[stackTarjan.back().first.first].begin() &&
             !stackTarjan.back().second) {
-            lowLevel[stackTarjan.back().first.first] = ++sccIndex;
-            currLevel[stackTarjan.back().first.first] = sccIndex;
-            inStack[stackTarjan.back().first.first] = true;
+            lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = ++sccIndex;
+            currLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = sccIndex;
+            inStack[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = true;
             sccStack.emplace_back(stackTarjan.back().first.first);
         }
 
@@ -339,37 +341,40 @@ void runTarjan(int node) {
 
         if (stackTarjan.back().second &&
             stackTarjan.back().first.second != outDegreeSimple[stackTarjan.back().first.first].end()) {
-            lowLevel[stackTarjan.back().first.first] = min(lowLevel[stackTarjan.back().first.first],
-                                                           lowLevel[*stackTarjan.back().first.second]);
+            lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = min(
+                    lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]],
+                    lowLevel[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]);
             stackTarjan.back().first.second++;
             stackTarjan.back().second = 0;
             continue;
         }
 
         if (stackTarjan.back().first.second != outDegreeSimple[stackTarjan.back().first.first].end()) {
-            if (!currLevel[*stackTarjan.back().first.second]) {
+            if (!currLevel[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]) {
                 stackTarjan.back().second = 1;
                 stackTarjan.emplace_back(make_pair(*stackTarjan.back().first.second,
                                                    outDegreeSimple[*stackTarjan.back().first.second].begin()), 0);
                 continue;
             } else {
-                if (inStack[*stackTarjan.back().first.second]) {
-                    lowLevel[stackTarjan.back().first.first] = min(lowLevel[stackTarjan.back().first.first],
-                                                                   lowLevel[*stackTarjan.back().first.second]);
+                if (inStack[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]) {
+                    lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = min(
+                            lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]],
+                            lowLevel[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]);
                 }
                 stackTarjan.back().first.second++;
                 stackTarjan.back().second = 0;
                 continue;
             }
         } else {
-            if (lowLevel[stackTarjan.back().first.first] == currLevel[stackTarjan.back().first.first]) {
+            if (lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] ==
+                currLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]]) {
                 ++sccCounter;
                 int currNode = -1;
                 while (currNode != stackTarjan.back().first.first) {
                     checkTime();
                     currNode = sccStack.back();
                     sccStack.pop_back();
-                    inStack[currNode] = false;
+                    inStack[posInCandidatesNodesSCC[currNode]] = false;
                     whichSCC[currNode] = sccCounter;
                 }
             }
@@ -504,14 +509,21 @@ void reduceDOME() {
 vector<pair<int, int>> toBeErasedSCC;
 
 int countSCC() {
+    if (posInCandidatesNodesSCC.empty()) {
+        posInCandidatesNodesSCC.resize(n + 1);
+    }
+    int i = 0;
+    for (auto it : candidatesNodes) {
+        posInCandidatesNodesSCC[it] = i++;
+    }
     sccIndex = 0;
     sccCounter = 0;
-    lowLevel.resize(n + 1, 0);
-    currLevel.resize(n + 1, 0);
-    inStack.resize(n + 1, false);
+    lowLevel.resize(candidatesNodes.size() + 1, 0);
+    currLevel.resize(candidatesNodes.size() + 1, 0);
+    inStack.resize(candidatesNodes.size() + 1, false);
     for (auto it : candidatesNodes) {
         checkTime();
-        if (!currLevel[it]) {
+        if (!currLevel[posInCandidatesNodesSCC[it]]) {
             checkTime();
             runTarjan(it);
         }
@@ -526,15 +538,23 @@ int countSCC() {
     return ret;
 }
 
+
 void reduceSCC() {
+    if (posInCandidatesNodesSCC.empty()) {
+        posInCandidatesNodesSCC.resize(n + 1);
+    }
+    int i = 0;
+    for (auto it : candidatesNodes) {
+        posInCandidatesNodesSCC[it] = i++;
+    }
     sccIndex = 0;
     sccCounter = 0;
-    lowLevel.resize(n + 1, 0);
-    currLevel.resize(n + 1, 0);
-    inStack.resize(n + 1, false);
+    lowLevel.resize(candidatesNodes.size() + 1, 0);
+    currLevel.resize(candidatesNodes.size() + 1, 0);
+    inStack.resize(candidatesNodes.size() + 1, false);
     for (auto it : candidatesNodes) {
         checkTime();
-        if (!currLevel[it]) {
+        if (!currLevel[posInCandidatesNodesSCC[it]]) {
             checkTime();
             runTarjan(it);
         }
@@ -918,10 +938,11 @@ void solveTestcase() {
     edgesReduced = edges;
     availableNodeReduced = availableNode;
     feedbackVertexSet.clear();
-    for (fitnessType = 1; fitnessType <= 5; ++fitnessType) {
+    for (fitnessType = 1; fitnessType <= 1; ++fitnessType) {
         checkTime();
         createInitialDFVS();
     }
+    /*
     improveFeedbackVertexSet();
     fitnessType = 1;
 
@@ -929,10 +950,12 @@ void solveTestcase() {
         checkTime();
         doLocalSearch();
     }
+    */
     string path_output =
             R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
     ofstream out(path_output);
-    //out << feedbackVertexSetReduced.size() + bestFeedbackVertexSet.size() << '\n';
+    out << feedbackVertexSetReduced.size() + bestFeedbackVertexSet.size() << '\n';
+    cout << feedbackVertexSetReduced.size() + bestFeedbackVertexSet.size() << '\n';
     for (auto it: feedbackVertexSetReduced) {
         output += to_string(it) + '\n';
         //bestFeedbackVertexSet.insert(it);
@@ -940,17 +963,18 @@ void solveTestcase() {
     for (auto node : bestFeedbackVertexSet) {
         output += to_string(node) + '\n';
     }
-    ios_base::sync_with_stdio(false);
-    cout.tie(nullptr);
+    //ios_base::sync_with_stdio(false);
+    //cout.tie(nullptr);
     //out.tie(nullptr);
-    cout << output;
-    //out << output;
+    //cout << output;
+    out << output;
     //out << bestFeedbackVertexSet.size() << '\n';
     //for (auto it: bestFeedbackVertexSet) {
     //    out << it << '\n';
     // }
     // cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
     out.close();
+    output.clear();
 }
 
 
@@ -967,7 +991,8 @@ signed main() {
     cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
     return 0;
      */
-    for (testNo = 191; testNo <= 191; testNo += 2) {
+    for (testNo = 1; testNo <= 51; testNo += 2) {
+        cout << testNo << ' ';
         solveTestcase();
     }
     return 0;

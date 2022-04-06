@@ -13,7 +13,7 @@ vector<vector<int>> scc;
 vector<set<int>> outDegree;
 vector<set<int>> inDegree;
 int sccIndex, sccCounter;
-
+vector<int> posInCandidatesNodesSCC;
 
 void runTarjan(int node) {
     stackTarjan.emplace_back(make_pair(node, outDegree[node].begin()), 0);
@@ -91,7 +91,7 @@ void reduceSCC() {
 signed main() {
     inDegree.resize(1000000, set<int>());
     outDegree.resize(1000000, set<int>());
-    for (int t = 191; t <= 191; t += 2) {
+    for (int t = 1; t <= 51; t += 2) {
         bad.clear();
         cout << "test " << t << " started\n";
         string path_in =
