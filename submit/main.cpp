@@ -31,9 +31,8 @@ vector<int> feedbackVertexSetList;
 vector<int> lowLevel, sccStack, currLevel, whichSCC;
 vector<pair<pair<int, set<int>::iterator>, int> > stackTarjan;
 set<int> cliqueCORE;
-vector<bool> visited;
+vector<bool> visitedCORE;
 vector<int> candidatesSorted;
-vector<int> posInCandidatesNodesCORE;
 string output;
 
 
@@ -170,6 +169,7 @@ void addEdge(int x, int y) {
 
 void initializeSets() {
     checkTime();
+    visitedCORE.resize(n + 1, false);
     lowLevel.resize(n + 1, 0);
     currLevel.resize(n + 1, 0);
     inStack.resize(n + 1, false);
@@ -183,7 +183,7 @@ void initializeSets() {
 
 void clearSets() {
     checkTime();
-    posInCandidatesNodesCORE.clear();
+    visitedCORE.clear();
     whichSCC.clear();
     feedbackVertexSet.clear();
     availableNode.clear();
@@ -389,20 +389,14 @@ void runTarjan(int node) {
 
 void reduceCORE() {
     checkTime();
-    if (posInCandidatesNodesCORE.empty()) {
-        posInCandidatesNodesCORE.resize(n + 1, 0);
-    }
-    visited.resize(candidatesNodes.size(), false);
-    int i = 0;
     for (auto it : candidatesNodes) {
-        checkTime();
-        posInCandidatesNodesCORE[it] = i++;
+        visitedCORE[it] = false;
     }
     for (auto it : edges) {
         checkTime();
         if (!edges.count(make_pair(it.second, it.first))) {
-            visited[posInCandidatesNodesCORE[it.first]] = true;
-            visited[posInCandidatesNodesCORE[it.second]] = true;
+            visitedCORE[it.first] = true;
+            visitedCORE[it.second] = true;
         }
     }
     checkTime();
@@ -421,10 +415,10 @@ void reduceCORE() {
     checkTime();
     for (auto node : candidatesSorted) {
         checkTime();
-        if (visited[posInCandidatesNodesCORE[node]]) continue;
+        if (visitedCORE[node]) continue;
         cliqueCORE.insert(node);
         if (!outDegreeSimple[node].empty()) {
-            visited[posInCandidatesNodesCORE[node]] = true;
+            visitedCORE[node] = true;
             continue;
         }
         for (auto it : outDegreeDouble[node]) {
@@ -446,7 +440,7 @@ void reduceCORE() {
                     isCore = false;
                 }
             }
-            visited[posInCandidatesNodesCORE[it]] = false;
+            visitedCORE[it] = false;
         }
         if (isCore) {
             for (auto it : cliqueCORE) {
@@ -459,7 +453,6 @@ void reduceCORE() {
         }
         cliqueCORE.clear();
     }
-    visited.clear();
     candidatesSorted.clear();
 }
 
@@ -623,7 +616,7 @@ void findDFVS() {
         }
         eraseNode(topNode.first);
         doBasicReductions();
-        if (edges.size() < edgesCount / 2 && getElapsed() < SECONDS - 90) {
+        if (edges.size() < edgesCount * 4 / 5 && getElapsed() < SECONDS - 90) {
             edgesCount = edges.size();
             reduceSCC();
             if (getElapsed() < SECONDS - 120) {
@@ -653,7 +646,7 @@ void readData() {
     path_input += to_string(testNo);
     ifstream in(path_input);
     int t;
-    while (getline(in, s)) {
+    while (getline(cin, s)) {
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -672,7 +665,7 @@ void readData() {
     }
     initializeSets();
     for (int j = 1; j <= n; ++j) {
-        getline(in, s);
+        getline(cin, s);
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -928,7 +921,7 @@ void solveTestcase() {
         checkTime();
         createInitialDFVS();
     }
-    /*
+
     improveFeedbackVertexSet();
     fitnessType = 1;
 
@@ -936,7 +929,7 @@ void solveTestcase() {
         checkTime();
         doLocalSearch();
     }
-    */
+
     string path_output =
             R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
     ofstream out(path_output);
@@ -977,9 +970,10 @@ signed main() {
     cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
     return 0;
      */
-    for (testNo = 1; testNo <= 199; testNo += 2) {
-        cout << testNo << ' ';
+    for (testNo = 1; testNo >= 1; testNo -= 2) {
+        //cout << testNo << ' ';
         solveTestcase();
+        //cout << getElapsed() << '\n';
     }
     return 0;
 }
