@@ -34,7 +34,6 @@ set<int> cliqueCORE;
 vector<bool> visited;
 vector<int> candidatesSorted;
 vector<int> posInCandidatesNodesCORE;
-vector<int> posInCandidatesNodesSCC;
 string output;
 
 
@@ -69,6 +68,7 @@ void checkTime() {
         //out << output;
         //cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
         //out.close();
+        //output.clear();
         exit(0);
     }
 }
@@ -170,6 +170,9 @@ void addEdge(int x, int y) {
 
 void initializeSets() {
     checkTime();
+    lowLevel.resize(n + 1, 0);
+    currLevel.resize(n + 1, 0);
+    inStack.resize(n + 1, false);
     whichSCC.resize(n + 1, 0);
     availableNode.resize(n + 1, true);
     inDegreeSimple.resize(n + 1, set<int>());
@@ -180,7 +183,6 @@ void initializeSets() {
 
 void clearSets() {
     checkTime();
-    posInCandidatesNodesSCC.clear();
     posInCandidatesNodesCORE.clear();
     whichSCC.clear();
     feedbackVertexSet.clear();
@@ -291,8 +293,8 @@ void bypassNode(int node) {
         eraseEdge(it.first.first, it.first.second, it.second);
     }
     toBeErasedBypass.clear();
-    checkTime();
     for (auto it1 : inNodes) {
+        checkTime();
         for (auto it2 : outNodes) {
             checkTime();
             if (edges.count(make_pair(it1, it2))) {
@@ -322,14 +324,15 @@ void bypassNode(int node) {
 }
 
 void runTarjan(int node) {
+    checkTime();
     stackTarjan.emplace_back(make_pair(node, outDegreeSimple[node].begin()), 0);
     for (; !stackTarjan.empty();) {
         checkTime();
         if (stackTarjan.back().first.second == outDegreeSimple[stackTarjan.back().first.first].begin() &&
             !stackTarjan.back().second) {
-            lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = ++sccIndex;
-            currLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = sccIndex;
-            inStack[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = true;
+            lowLevel[stackTarjan.back().first.first] = ++sccIndex;
+            currLevel[stackTarjan.back().first.first] = sccIndex;
+            inStack[stackTarjan.back().first.first] = true;
             sccStack.emplace_back(stackTarjan.back().first.first);
         }
 
@@ -341,40 +344,40 @@ void runTarjan(int node) {
 
         if (stackTarjan.back().second &&
             stackTarjan.back().first.second != outDegreeSimple[stackTarjan.back().first.first].end()) {
-            lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = min(
-                    lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]],
-                    lowLevel[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]);
+            lowLevel[stackTarjan.back().first.first] = min(
+                    lowLevel[stackTarjan.back().first.first],
+                    lowLevel[*stackTarjan.back().first.second]);
             stackTarjan.back().first.second++;
             stackTarjan.back().second = 0;
             continue;
         }
 
         if (stackTarjan.back().first.second != outDegreeSimple[stackTarjan.back().first.first].end()) {
-            if (!currLevel[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]) {
+            if (!currLevel[*stackTarjan.back().first.second]) {
                 stackTarjan.back().second = 1;
                 stackTarjan.emplace_back(make_pair(*stackTarjan.back().first.second,
                                                    outDegreeSimple[*stackTarjan.back().first.second].begin()), 0);
                 continue;
             } else {
-                if (inStack[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]) {
-                    lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] = min(
-                            lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]],
-                            lowLevel[posInCandidatesNodesSCC[*stackTarjan.back().first.second]]);
+                if (inStack[*stackTarjan.back().first.second]) {
+                    lowLevel[stackTarjan.back().first.first] = min(
+                            lowLevel[stackTarjan.back().first.first],
+                            lowLevel[*stackTarjan.back().first.second]);
                 }
                 stackTarjan.back().first.second++;
                 stackTarjan.back().second = 0;
                 continue;
             }
         } else {
-            if (lowLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]] ==
-                currLevel[posInCandidatesNodesSCC[stackTarjan.back().first.first]]) {
+            if (lowLevel[stackTarjan.back().first.first] ==
+                currLevel[stackTarjan.back().first.first]) {
                 ++sccCounter;
                 int currNode = -1;
                 while (currNode != stackTarjan.back().first.first) {
                     checkTime();
                     currNode = sccStack.back();
                     sccStack.pop_back();
-                    inStack[posInCandidatesNodesSCC[currNode]] = false;
+                    inStack[currNode] = false;
                     whichSCC[currNode] = sccCounter;
                 }
             }
@@ -385,6 +388,7 @@ void runTarjan(int node) {
 
 
 void reduceCORE() {
+    checkTime();
     if (posInCandidatesNodesCORE.empty()) {
         posInCandidatesNodesCORE.resize(n + 1, 0);
     }
@@ -495,7 +499,6 @@ void reduceDOME() {
                     continue;
                 }
             }
-            checkTime();
         }
     }
     for (auto it : toBeErasedDOME) {
@@ -509,21 +512,18 @@ void reduceDOME() {
 vector<pair<int, int>> toBeErasedSCC;
 
 int countSCC() {
-    if (posInCandidatesNodesSCC.empty()) {
-        posInCandidatesNodesSCC.resize(n + 1);
-    }
-    int i = 0;
-    for (auto it : candidatesNodes) {
-        posInCandidatesNodesSCC[it] = i++;
-    }
+    checkTime();
     sccIndex = 0;
     sccCounter = 0;
-    lowLevel.resize(candidatesNodes.size() + 1, 0);
-    currLevel.resize(candidatesNodes.size() + 1, 0);
-    inStack.resize(candidatesNodes.size() + 1, false);
     for (auto it : candidatesNodes) {
         checkTime();
-        if (!currLevel[posInCandidatesNodesSCC[it]]) {
+        lowLevel[it] = 0;
+        currLevel[it] = 0;
+        inStack[it] = false;
+    }
+    for (auto it : candidatesNodes) {
+        checkTime();
+        if (!currLevel[it]) {
             checkTime();
             runTarjan(it);
         }
@@ -531,35 +531,28 @@ int countSCC() {
     int ret = sccCounter;
     sccIndex = 0;
     sccCounter = 0;
-    lowLevel.clear();
-    currLevel.clear();
-    inStack.clear();
     sccStack.clear();
     return ret;
 }
 
 
 void reduceSCC() {
-    if (posInCandidatesNodesSCC.empty()) {
-        posInCandidatesNodesSCC.resize(n + 1);
-    }
-    int i = 0;
-    for (auto it : candidatesNodes) {
-        posInCandidatesNodesSCC[it] = i++;
-    }
+    checkTime();
     sccIndex = 0;
     sccCounter = 0;
-    lowLevel.resize(candidatesNodes.size() + 1, 0);
-    currLevel.resize(candidatesNodes.size() + 1, 0);
-    inStack.resize(candidatesNodes.size() + 1, false);
     for (auto it : candidatesNodes) {
         checkTime();
-        if (!currLevel[posInCandidatesNodesSCC[it]]) {
+        lowLevel[it] = 0;
+        currLevel[it] = 0;
+        inStack[it] = false;
+    }
+    for (auto it : candidatesNodes) {
+        checkTime();
+        if (!currLevel[it]) {
             checkTime();
             runTarjan(it);
         }
     }
-    checkTime();
     for (auto it : edges) {
         checkTime();
         if (edges.count(make_pair(it.second, it.first))) continue;
@@ -574,13 +567,11 @@ void reduceSCC() {
     toBeErasedSCC.clear();
     sccIndex = 0;
     sccCounter = 0;
-    lowLevel.clear();
-    currLevel.clear();
-    inStack.clear();
     sccStack.clear();
 }
 
 void doBasicReductions() {
+    checkTime();
     bool change = true;
     while (change) {
         checkTime();
@@ -619,6 +610,7 @@ void doBasicReductions() {
 
 
 void findDFVS() {
+    checkTime();
     doBasicReductions();
     int edgesCount = edges.size();
     while (!availableNodes.empty()) {
@@ -713,6 +705,7 @@ void readData() {
 
 
 void createInitialDFVS() {
+    checkTime();
     candidatesNodes = candidatesNodesReduced;
     inDegreeSimple = inDegreeReducedSimple;
     inDegreeDouble = inDegreeReducedDouble;
@@ -720,13 +713,12 @@ void createInitialDFVS() {
     outDegreeDouble = outDegreeReducedDouble;
     edges = edgesReduced;
     availableNode = availableNodeReduced;
-    checkTime();
     for (auto i : candidatesNodes) {
+        checkTime();
         if (!checkNodeCanBeReduced(i)) {
             availableNodes.push(make_pair(i, getFitness(i)));
         }
     }
-    checkTime();
     findDFVS();
     feedbackVertexSetLocalSearch = feedbackVertexSet;
     clearSets();
@@ -734,6 +726,7 @@ void createInitialDFVS() {
 }
 
 void doLocalSearch() {
+    checkTime();
     candidatesNodes = candidatesNodesReduced;
     inDegreeSimple = inDegreeReducedSimple;
     inDegreeDouble = inDegreeReducedDouble;
@@ -763,7 +756,6 @@ void doLocalSearch() {
             availableNodes.push(make_pair(i, getFitness(i)));
         }
     }
-    checkTime();
     findDFVS();
     if (feedbackVertexSet.size() < feedbackVertexSetLocalSearch.size()) {
         feedbackVertexSetLocalSearch = feedbackVertexSet;
@@ -773,6 +765,7 @@ void doLocalSearch() {
 }
 
 void improveFeedbackVertexSet() {
+    checkTime();
     candidatesNodes = candidatesNodesReduced;
     inDegreeSimple = inDegreeReducedSimple;
     inDegreeDouble = inDegreeReducedDouble;
