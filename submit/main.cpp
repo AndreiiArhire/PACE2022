@@ -48,7 +48,7 @@ void checkTime() {
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
     double sec = elapsed.count() * 1e-9;
-    if (sec >= SECONDS - 60) {
+    if (sec >= SECONDS - 30) {
         string path_output =
                 R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
         ofstream out(path_output);
@@ -64,8 +64,8 @@ void checkTime() {
         }
         ios_base::sync_with_stdio(false);
         cout.tie(nullptr);
+        //cout << output;
         out << output;
-        //out << output;
         //cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
         //out.close();
         //output.clear();
@@ -75,11 +75,14 @@ void checkTime() {
 
 
 long long getFitness(int node) {
-    if (fitnessType == 1) {
+    if (fitnessType == 0) {
         return 1LL * (inDegreeSimple[node].size() + outDegreeDouble[node].size()) *
                (outDegreeSimple[node].size() + outDegreeDouble[node].size());
     }
-
+    if (fitnessType == 1) {
+        return 1LL * outDegreeDouble[node].size() * 1e11 +
+               1LL * (inDegreeSimple[node].size()) * (outDegreeSimple[node].size());
+    }
     if (fitnessType == 2) {
         return 1LL * (inDegreeSimple[node].size() + inDegreeDouble[node].size() * 2) *
                (outDegreeSimple[node].size() + outDegreeDouble[node].size() * 2);
@@ -390,6 +393,82 @@ void runTarjan(int node) {
     }
 }
 
+vector<int> TarjanNodes;
+
+bool checkTarjan(int node) {
+    checkTime();
+    stackTarjan.emplace_back(make_pair(node, outDegreeSimple[node].begin()), 0);
+    for (; !stackTarjan.empty();) {
+        checkTime();
+        if (stackTarjan.back().first.second == outDegreeSimple[stackTarjan.back().first.first].begin() &&
+            !stackTarjan.back().second) {
+            lowLevel[stackTarjan.back().first.first] = ++sccIndex;
+            currLevel[stackTarjan.back().first.first] = sccIndex;
+            inStack[stackTarjan.back().first.first] = true;
+            sccStack.emplace_back(stackTarjan.back().first.first);
+            TarjanNodes.emplace_back(stackTarjan.back().first.first);
+        }
+        if (stackTarjan.back().first.second != outDegreeSimple[stackTarjan.back().first.first].end() &&
+            edges.count(make_pair(*stackTarjan.back().first.second, stackTarjan.back().first.first))) {
+            stackTarjan.back().first.second++;
+            continue;
+        }
+
+        if (stackTarjan.back().second &&
+            stackTarjan.back().first.second != outDegreeSimple[stackTarjan.back().first.first].end()) {
+            lowLevel[stackTarjan.back().first.first] = min(
+                    lowLevel[stackTarjan.back().first.first],
+                    lowLevel[*stackTarjan.back().first.second]);
+            if (lowLevel[stackTarjan.back().first.first] != currLevel[stackTarjan.back().first.first]) {
+                sccStack.clear();
+                stackTarjan.clear();
+                return false;
+            }
+            stackTarjan.back().first.second++;
+            stackTarjan.back().second = 0;
+            continue;
+        }
+
+        if (stackTarjan.back().first.second != outDegreeSimple[stackTarjan.back().first.first].end()) {
+            if (!currLevel[*stackTarjan.back().first.second]) {
+                stackTarjan.back().second = 1;
+                stackTarjan.emplace_back(make_pair(*stackTarjan.back().first.second,
+                                                   outDegreeSimple[*stackTarjan.back().first.second].begin()), 0);
+                continue;
+            } else {
+                if (inStack[*stackTarjan.back().first.second]) {
+                    lowLevel[stackTarjan.back().first.first] = min(
+                            lowLevel[stackTarjan.back().first.first],
+                            lowLevel[*stackTarjan.back().first.second]);
+                }
+                if (lowLevel[stackTarjan.back().first.first] != currLevel[stackTarjan.back().first.first]) {
+                    sccStack.clear();
+                    stackTarjan.clear();
+                    return false;
+                }
+                stackTarjan.back().first.second++;
+                stackTarjan.back().second = 0;
+                continue;
+            }
+        } else {
+            if (lowLevel[stackTarjan.back().first.first] ==
+                currLevel[stackTarjan.back().first.first]) {
+                ++sccCounter;
+                int currNode = -1;
+                while (currNode != stackTarjan.back().first.first) {
+                    checkTime();
+                    currNode = sccStack.back();
+                    sccStack.pop_back();
+                    inStack[currNode] = false;
+                    whichSCC[currNode] = sccCounter;
+                }
+            }
+            stackTarjan.pop_back();
+        }
+    }
+    return true;
+}
+
 
 void reduceCORE() {
     checkTime();
@@ -508,7 +587,7 @@ void reduceDOME() {
 
 vector<pair<int, int>> toBeErasedSCC;
 
-int countSCC() {
+int countSCC(int node) {
     checkTime();
     sccIndex = 0;
     sccCounter = 0;
@@ -518,14 +597,7 @@ int countSCC() {
         currLevel[it] = 0;
         inStack[it] = false;
     }
-    for (auto it : candidatesNodes) {
-        checkTime();
-        if (!currLevel[it]) {
-            checkTime();
-            runTarjan(it);
-        }
-    }
-    int ret = sccCounter;
+    bool ret = checkTarjan(node);
     sccIndex = 0;
     sccCounter = 0;
     sccStack.clear();
@@ -626,7 +698,7 @@ void findDFVS() {
         eraseNode(topNode.first);
         doBasicReductions();
 
-        if (getElapsed() < SECONDS - 60 - 60 * 5) {
+        if (getElapsed() < SECONDS - 30 - 60 * 5) {
             if (edges.size() < edgesCount * 4 / 5) {
                 edgesCount = edges.size();
                 reduceSCC();
@@ -637,7 +709,7 @@ void findDFVS() {
                 doBasicReductions();
             }
         } else {
-            if (getElapsed() < SECONDS - 60 - 60 * 3) {
+            if (getElapsed() < SECONDS - 30 - 60 * 3) {
                 if (edges.size() < edgesCount * 3 / 4) {
                     edgesCount = edges.size();
                     reduceSCC();
@@ -648,7 +720,7 @@ void findDFVS() {
                     doBasicReductions();
                 }
             } else {
-                if (getElapsed() < SECONDS - 60 - 60 * 1) {
+                if (getElapsed() < SECONDS - 30 - 60 * 1) {
                     if (edges.size() < edgesCount * 2 / 3) {
                         edgesCount = edges.size();
                         reduceSCC();
@@ -892,6 +964,7 @@ void improveFeedbackVertexSet() {
                inDegreeReducedSimple[j].size() + outDegreeReducedSimple[j].size();
     });
     while (!localDFVS.empty()) {
+        cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         checkTime();
         int node = localDFVS.back();
         localDFVS.pop_back();
@@ -927,7 +1000,7 @@ void improveFeedbackVertexSet() {
         }
         candidatesNodes.insert(node);
         availableNode[node] = true;
-        if (candidatesNodes.size() == countSCC()) {
+        if (countSCC(node)) {
             bestFeedbackVertexSet.erase(node);
         } else {
             for (auto it : inDegreeSimple[node]) {
@@ -992,15 +1065,15 @@ void solveTestcase() {
         checkTime();
         createInitialDFVS();
     }
-
+    cout << getElapsed() << ' ' << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     improveFeedbackVertexSet();
     fitnessType = 1;
-    /*
+
     for (;;) {
         checkTime();
         doLocalSearch();
     }
-    */
+
     string path_output =
             R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
     ofstream out(path_output);
@@ -1041,8 +1114,8 @@ signed main() {
     cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
     return 0;
      */
-    for (testNo = 65; testNo <= 199; testNo += 2) {
-        cout << testNo << ' ';
+    for (testNo = 199; testNo <= 199; testNo += 2) {
+        //cout << testNo << ' ';
         solveTestcase();
         //cout << getElapsed() << '\n';
     }
