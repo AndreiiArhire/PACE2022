@@ -91,7 +91,7 @@ void reduceSCC() {
 signed main() {
     inDegree.resize(1000000, set<int>());
     outDegree.resize(1000000, set<int>());
-    for (int t = 191; t <= 191; t += 2) {
+    for (int t = 1; t <= 5; t += 2) {
         bad.clear();
         cout << "test " << t << " started\n";
         string path_in =
@@ -128,7 +128,7 @@ signed main() {
         }
 
         reduceSCC();
-        cout << "test " << t << " finished  ";
+        cout << "test " << (t + 1) / 2 << " finished  ";
         cout << ":)\n";
         sol.clear();
         for (int i = 0; i <= n; ++i) {
