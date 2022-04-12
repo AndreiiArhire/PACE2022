@@ -82,8 +82,8 @@ void checkTime() {
         string path_output =
                 R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
         ofstream out(path_output);
-        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
-        //out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         for (auto it: feedbackVertexSetReduced) {
             output += to_string(it) + '\n';
             // bestFeedbackVertexSet.insert(it);
@@ -94,10 +94,10 @@ void checkTime() {
         }
         //ios_base::sync_with_stdio(false);
         //cout.tie(nullptr);
-        cout << output;
-        //out << output;
+        //cout << output;
+        out << output;
         //cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
-        // out.close();
+        out.close();
         // output.clear();
         exit(0);
     }
@@ -813,13 +813,6 @@ bool reduceCORER() {
         checkTime();
         visitedCORE[it] = false;
     }
-    for (auto it : edges) {
-        checkTime();
-        if (!edges.count(make_pair(it.second, it.first))) {
-            visitedCORE[it.first] = true;
-            visitedCORE[it.second] = true;
-        }
-    }
     checkTime();
     candidatesSorted.reserve(candidatesNodes.size());
     for (auto node : candidatesNodes) {
@@ -828,18 +821,14 @@ bool reduceCORER() {
     }
     checkTime();
     sort(candidatesSorted.begin(), candidatesSorted.end(), [](const int i, const int j) {
-        return inDegreeSimple[i].size() + inDegreeDouble[i].size() + outDegreeSimple[i].size() +
-               outDegreeDouble[i].size() <
-               inDegreeSimple[j].size() + inDegreeDouble[j].size() + outDegreeSimple[j].size() +
-               outDegreeDouble[j].size();
+        return outDegreeDouble[i].size() < outDegreeDouble[j].size();
     });
     checkTime();
     bool ret = false;
     for (auto node : candidatesSorted) {
         checkTime();
         if (visitedCORE[node]) continue;
-        cliqueCORE.insert(node);
-        if (!outDegreeSimple[node].empty()) {
+        if (outDegreeSimple[node].size() > 1 && inDegreeSimple[node].size() > 1) {
             visitedCORE[node] = true;
             continue;
         }
@@ -862,7 +851,7 @@ bool reduceCORER() {
                     isCore = false;
                 }
             }
-            visitedCORE[it] = false;
+            visitedCORE[it] = true;
         }
         if (isCore) {
             for (auto it : cliqueCORE) {
@@ -1284,15 +1273,15 @@ void findDfvsM() {
 
 void loop() {
     bool change = true;
-    while (change) {
-        change = false;
-        change |= reduceSCCR();
-        doBasicReductionsR();
-        change |= reduceCORER();
-        doBasicReductionsR();
-        change |= reduceDOMER();
-        doBasicReductionsR();
-    }
+    //  while (change) {
+    change = false;
+    change |= reduceSCCR();
+    doBasicReductionsR();
+    change |= reduceCORER();
+    doBasicReductionsR();
+    change |= reduceDOMER();
+    doBasicReductionsR();
+    //}
 }
 
 void findDfvsR() {
@@ -1335,24 +1324,24 @@ void findDfvsR() {
                 if (edges.size() < edgesCount * 3 / 4) {
                     edgesCount = edges.size();
                     reduceSCCR();
-                    // loop();
+                    loop();
                 }
             } else {
                 if (getElapsed() < SECONDS - 60 - 60 * 3) {
                     if (edges.size() < edgesCount * 2 / 3) {
                         edgesCount = edges.size();
-                        //   loop();
+                        loop();
                     }
                 } else {
                     if (getElapsed() < SECONDS - 60 - 60 * 1) {
                         if (edges.size() < edgesCount * 2 / 3) {
                             edgesCount = edges.size();
-                            //     loop();
+                            loop();
                         }
                     } else {
                         if (edges.size() < edgesCount * 1 / 2) {
                             edgesCount = edges.size();
-                            //   loop();
+                            loop();
                         }
                     }
                 }
@@ -1381,7 +1370,7 @@ void readData() {
     path_input += to_string(testNo);
     ifstream in(path_input);
     int t;
-    while (getline(cin, s)) {
+    while (getline(in, s)) {
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -1400,7 +1389,7 @@ void readData() {
     }
     initializeSets();
     for (int j = 1; j <= n; ++j) {
-        getline(cin, s);
+        getline(in, s);
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -1669,6 +1658,7 @@ void solveTestcase() {
     begin_ = std::chrono::high_resolution_clock::now();
     srand(0);
     readData();
+    //  cout << n << ' ';
     fitnessType = 1;
     for (int i = 1; i <= n; ++i) {
         checkNodeCanBeReduced(i);
@@ -1676,7 +1666,9 @@ void solveTestcase() {
     for (int i = 1; i <= n; ++i) {
         candidatesNodes.insert(i);
     }
+    cout << candidatesNodes.size() << '\n';
     loop();
+    cout << candidatesNodes.size() << '\n';
     candidatesNodesReduced = candidatesNodes;
     inDegreeReducedSimple = inDegreeSimple;
     inDegreeReducedDouble = inDegreeDouble;
@@ -1691,8 +1683,9 @@ void solveTestcase() {
     for (fitnessType = 1; fitnessType <= 7; ++fitnessType) {
         checkTime();
         createInitialDfvsR();
+        cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         improveFeedbackVertexSet();
-        // cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
     for (alpha = 205; alpha <= 295; alpha += 5) {
         checkTime();
@@ -1764,7 +1757,7 @@ signed main() {
     cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
     return 0;
     */
-    for (testNo = 1; testNo <= 1; testNo += 2) {
+    for (testNo = 165; testNo <= 165; testNo += 2) {
         //cout << testNo << ' ';
         solveTestcase();
         //cout << getElapsed() << '\n';
