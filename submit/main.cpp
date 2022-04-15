@@ -39,7 +39,6 @@ struct cmpR {
     }
 };
 
-/*
 struct cmpM {
     bool inline operator()(const pair<int, long long> &i, const pair<int, long long> &j) {
         if (i.second < 1e11 && j.second < 1e11) {
@@ -54,14 +53,14 @@ struct cmpM {
         return i.second > j.second || (i.second == j.second && i.first < j.first);
     }
 };
-*/
 
+/*
 struct cmpM {
     bool inline operator()(const pair<int, long long> &i, const pair<int, long long> &j) {
         return i.second > j.second || (i.second == j.second && i.first < j.first);
     }
 };
-
+*/
 priority_queue<pair<int, long long>, vector<pair<int, long long>>, cmpR> availableNodesR;
 priority_queue<pair<int, long long>, vector<pair<int, long long>>, cmpM> availableNodesM;
 
@@ -78,12 +77,12 @@ void checkTime() {
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
     double sec = elapsed.count() * 1e-9;
-    if (sec >= SECONDS - 60) {
+    if (sec >= SECONDS - 30) {
         string path_output =
                 R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
         ofstream out(path_output);
-        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
-        out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         for (auto it: feedbackVertexSetReduced) {
             output += to_string(it) + '\n';
             // bestFeedbackVertexSet.insert(it);
@@ -94,21 +93,24 @@ void checkTime() {
         }
         //ios_base::sync_with_stdio(false);
         //cout.tie(nullptr);
-        //cout << output;
-        out << output;
+        cout << output;
         //cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
         out.close();
-        // output.clear();
+        output.clear();
         exit(0);
     }
 }
 
 long long getFitness(int node) {
-    if (fitnessType == 1) {
-        return 1LL * (inDegreeSimple[node].size() + 2 * outDegreeDouble[node].size()) *
-               (outDegreeSimple[node].size() + 2 * outDegreeDouble[node].size());
-    }
     if (fitnessType == 2) {
+        return 1LL * (inDegreeSimple[node].size() + 2LL * outDegreeDouble[node].size()) *
+               (outDegreeSimple[node].size() + 2LL * outDegreeDouble[node].size());
+    }
+    if (fitnessType == 0) {
+        return 1. * min(inDegreeSimple[node].size(), outDegreeSimple[node].size()) +
+               outDegreeDouble[node].size() * 1e11;
+    }
+    if (fitnessType == 1) {
         return 1LL * outDegreeDouble[node].size() * 1e11 +
                1LL * (inDegreeSimple[node].size()) * (outDegreeSimple[node].size());
     }
@@ -762,9 +764,10 @@ bool checkTarjan(int node) {
     return true;
 }
 
-void reducePseudoCORE() {
+bool reducePseudoCORE() {
     checkTime();
     for (auto it : candidatesNodes) {
+        checkTime();
         visitedCORE[it] = false;
     }
     checkTime();
@@ -774,37 +777,54 @@ void reducePseudoCORE() {
         candidatesSorted.emplace_back(node);
     }
     checkTime();
-    /*
     sort(candidatesSorted.begin(), candidatesSorted.end(), [](const int i, const int j) {
-        return inDegreeSimple[i].size() + outDegreeSimple[i].size() + inDegreeDouble[i].size() <
-               inDegreeSimple[j].size() + outDegreeSimple[j].size() + inDegreeDouble[j].size();
-    });
-    */
-    sort(candidatesSorted.begin(), candidatesSorted.end(), [](const int i, const int j) {
-        return (inDegreeDouble[i].size() < inDegreeDouble[j].size()) ||
-               (inDegreeDouble[i].size() == inDegreeDouble[j].size() &&
-                inDegreeSimple[i].size() + outDegreeSimple[i].size() <
-                inDegreeSimple[j].size() + outDegreeSimple[j].size());
+        return outDegreeDouble[i].size() < outDegreeDouble[j].size() ||
+               (outDegreeDouble[i].size() == outDegreeDouble[j].size() &&
+                1LL * inDegreeSimple[i].size() * outDegreeSimple[i].size() <
+                1LL * inDegreeSimple[j].size() * outDegreeSimple[j].size());
     });
     checkTime();
-    //cout << "**\n";
+    bool ret = false;
+    // cout << candidatesNodes.size() << ' ';
     for (auto node : candidatesSorted) {
         checkTime();
-        if (cliqueCORE.count(node)) {
+        if (visitedCORE[node]) continue;
+        visitedCORE[node] = true;
+
+        if (!outDegreeSimple[node].empty() && !inDegreeSimple[node].empty()) {
+            visitedCORE[node] = true;
             continue;
         }
+
+        bool sw = true;
         for (auto it : outDegreeDouble[node]) {
             checkTime();
-            cliqueCORE.insert(it);
+            if (!visitedCORE[it] && outDegreeDouble[it].size() > outDegreeDouble[node].size()) {
+                cliqueCORE.insert(it);
+            } else {
+                sw = false;
+            }
         }
+        for (auto it : cliqueCORE) {
+            checkTime();
+            visitedCORE[it] = true;
+        }
+        if (sw) {
+            for (auto it : cliqueCORE) {
+                checkTime();
+                eraseNodeM(it);
+                if (it != node) {
+                    feedbackVertexSet.insert(it);
+                }
+            }
+            ret |= sw;
+            //return true;
+        }
+        cliqueCORE.clear();
     }
-    for (auto it : cliqueCORE) {
-        checkTime();
-        eraseNodeR(it);
-        feedbackVertexSet.insert(it);
-    }
-    cliqueCORE.clear();
+    //  cout << candidatesNodes.size() << ' ' << ret << '\n';
     candidatesSorted.clear();
+    return ret;
 }
 
 bool reduceCORER() {
@@ -821,14 +841,19 @@ bool reduceCORER() {
     }
     checkTime();
     sort(candidatesSorted.begin(), candidatesSorted.end(), [](const int i, const int j) {
-        return outDegreeDouble[i].size() < outDegreeDouble[j].size();
+        return outDegreeDouble[i].size() < outDegreeDouble[j].size() ||
+               (outDegreeDouble[i].size() == outDegreeDouble[j].size() &&
+                1LL * inDegreeSimple[i].size() * outDegreeSimple[i].size() <
+                1LL * inDegreeSimple[j].size() * outDegreeSimple[j].size());
     });
     checkTime();
     bool ret = false;
+    //cout << candidatesNodes.size() << ' ';
     for (auto node : candidatesSorted) {
         checkTime();
         if (visitedCORE[node]) continue;
-        if (outDegreeSimple[node].size() > 1 && inDegreeSimple[node].size() > 1) {
+
+        if (outDegreeSimple[node].size() > 0 && inDegreeSimple[node].size() > 0) {
             visitedCORE[node] = true;
             continue;
         }
@@ -837,6 +862,9 @@ bool reduceCORER() {
             cliqueCORE.insert(it);
         }
         bool isCore = true;
+        if (cliqueCORE.empty()) {
+            isCore = false;
+        }
         for (auto it : cliqueCORE) {
             checkTime();
             int sz = 1;
@@ -865,22 +893,16 @@ bool reduceCORER() {
         }
         cliqueCORE.clear();
     }
+    // cout << candidatesNodes.size() << '\n';
     candidatesSorted.clear();
     return ret;
 }
 
-void reduceCOREM() {
+bool reduceCOREM() {
     checkTime();
     for (auto it : candidatesNodes) {
         checkTime();
         visitedCORE[it] = false;
-    }
-    for (auto it : edges) {
-        checkTime();
-        if (!edges.count(make_pair(it.second, it.first))) {
-            visitedCORE[it.first] = true;
-            visitedCORE[it.second] = true;
-        }
     }
     checkTime();
     candidatesSorted.reserve(candidatesNodes.size());
@@ -890,17 +912,19 @@ void reduceCOREM() {
     }
     checkTime();
     sort(candidatesSorted.begin(), candidatesSorted.end(), [](const int i, const int j) {
-        return inDegreeSimple[i].size() + inDegreeDouble[i].size() + outDegreeSimple[i].size() +
-               outDegreeDouble[i].size() <
-               inDegreeSimple[j].size() + inDegreeDouble[j].size() + outDegreeSimple[j].size() +
-               outDegreeDouble[j].size();
+        return outDegreeDouble[i].size() < outDegreeDouble[j].size() ||
+               (outDegreeDouble[i].size() == outDegreeDouble[j].size() &&
+                1LL * inDegreeSimple[i].size() * outDegreeSimple[i].size() <
+                1LL * inDegreeSimple[j].size() * outDegreeSimple[j].size());
     });
     checkTime();
+    bool ret = false;
+    // cout << candidatesNodes.size() << ' ';
     for (auto node : candidatesSorted) {
         checkTime();
         if (visitedCORE[node]) continue;
-        cliqueCORE.insert(node);
-        if (!outDegreeSimple[node].empty()) {
+
+        if (outDegreeSimple[node].size() > 0 && inDegreeSimple[node].size() > 0) {
             visitedCORE[node] = true;
             continue;
         }
@@ -909,6 +933,9 @@ void reduceCOREM() {
             cliqueCORE.insert(it);
         }
         bool isCore = true;
+        if (cliqueCORE.empty()) {
+            isCore = false;
+        }
         for (auto it : cliqueCORE) {
             checkTime();
             int sz = 1;
@@ -923,7 +950,7 @@ void reduceCOREM() {
                     isCore = false;
                 }
             }
-            visitedCORE[it] = false;
+            visitedCORE[it] = true;
         }
         if (isCore) {
             for (auto it : cliqueCORE) {
@@ -933,11 +960,15 @@ void reduceCOREM() {
                     feedbackVertexSet.insert(it);
                 }
             }
+            ret = true;
         }
         cliqueCORE.clear();
     }
+    // cout << candidatesNodes.size() << '\n';
     candidatesSorted.clear();
+    return ret;
 }
+
 
 vector<pair<int, int>> toBeErasedDOME;
 
@@ -1089,7 +1120,7 @@ bool reduceSCCR() {
     return ret;
 }
 
-void reduceSCCM() {
+bool reduceSCCM() {
     checkTime();
     sccIndex = 0;
     sccCounter = 0;
@@ -1113,6 +1144,7 @@ void reduceSCCM() {
             toBeErasedSCC.emplace_back(it);
         }
     }
+    bool ret = !toBeErasedSCC.empty();
     for (auto it : toBeErasedSCC) {
         checkTime();
         eraseEdgeM(it.first, it.second, 3);
@@ -1121,6 +1153,7 @@ void reduceSCCM() {
     sccIndex = 0;
     sccCounter = 0;
     sccStack.clear();
+    return ret;
 }
 
 
@@ -1200,6 +1233,20 @@ void doBasicReductionsM() {
     }
 }
 
+void loopM() {
+    bool change = true;
+    while (change) {
+        change = false;
+        change |= reduceSCCM();
+        doBasicReductionsM();
+        change |= reducePseudoCORE();
+        //change |= reduceCOREM();
+        doBasicReductionsM();
+        change |= reduceDOMEM();
+        doBasicReductionsM();
+    }
+}
+
 void findDfvsM() {
     checkTime();
     doBasicReductionsM();
@@ -1219,46 +1266,26 @@ void findDfvsM() {
         // }
         doBasicReductionsM();
         if (getElapsed() < SECONDS - 60 - 60 * 5) {
-            if (edges.size() < edgesCount * 4 / 5) {
+            if (edges.size() < edgesCount * 19 / 20) {
                 edgesCount = edges.size();
-                reduceSCCM();
-                doBasicReductionsM();
-                reduceCOREM();
-                doBasicReductionsM();
-                reduceDOMEM();
-                doBasicReductionsM();
+                loopM();
             }
         } else {
             if (getElapsed() < SECONDS - 60 - 60 * 3) {
                 if (edges.size() < edgesCount * 3 / 4) {
                     edgesCount = edges.size();
-                    reduceSCCM();
-                    doBasicReductionsM();
-                    reduceCOREM();
-                    doBasicReductionsM();
-                    //reduceDOMEM();
-                    //doBasicReductionsM();
+                    loopM();
                 }
             } else {
                 if (getElapsed() < SECONDS - 60 - 60 * 1) {
                     if (edges.size() < edgesCount * 2 / 3) {
                         edgesCount = edges.size();
-                        //reduceSCCM();
-                        //doBasicReductionsM();
-                        reduceCOREM();
-                        doBasicReductionsM();
-                        //reduceDOMEM();
-                        //doBasicReductionsM();
+                        loopM();
                     }
                 } else {
                     if (edges.size() < edgesCount * 1 / 2) {
                         edgesCount = edges.size();
-                        //reduceSCCM();
-                        //doBasicReductionsM();
-                        reduceCOREM();
-                        doBasicReductionsM();
-                        //reduceDOMEM();
-                        //doBasicReductionsM();
+                        loopM();
                     }
                 }
             }
@@ -1271,18 +1298,19 @@ void findDfvsM() {
     }
 }
 
-void loop() {
+void loopR() {
     bool change = true;
-    //  while (change) {
-    change = false;
-    change |= reduceSCCR();
-    doBasicReductionsR();
-    change |= reduceCORER();
-    doBasicReductionsR();
-    change |= reduceDOMER();
-    doBasicReductionsR();
-    //}
+    while (change) {
+        change = false;
+        change |= reduceSCCR();
+        doBasicReductionsR();
+        change |= reduceCORER();
+        doBasicReductionsR();
+        change |= reduceDOMER();
+        doBasicReductionsR();
+    }
 }
+
 
 void findDfvsR() {
     checkTime();
@@ -1291,7 +1319,7 @@ void findDfvsR() {
     //   cout << "++" << candidatesNodes.size() << ' ' << fitnessType << '\n';
     currentErased = 0;
     int node = 0;
-    loop();
+    loopR();
     while (!availableNodesR.empty()) {
         checkTime();
         pair<int, long long> topNode = availableNodesR.top();
@@ -1310,38 +1338,36 @@ void findDfvsR() {
         } else {
             eraseNodeR(topNode.first);
         }
-        if (inDegreeDouble[topNode.first].empty()) {
-            //   cout << "--" << candidatesNodes.size() << '\n';
-        }
         doBasicReductionsR();
-        if (getElapsed() < SECONDS - 60 - 60 * 6) {
-            if (edges.size() < edgesCount * 4 / 5) {
+        if (getElapsed() < SECONDS - 60 - 60 * 5) {
+            if (edges.size() < edgesCount * 19 / 20) {
                 edgesCount = edges.size();
-                loop();
+                loopR();
+                // cout << "***\n";
             }
         } else {
-            if (getElapsed() < SECONDS - 60 - 60 * 5) {
-                if (edges.size() < edgesCount * 3 / 4) {
+            if (getElapsed() < SECONDS - 60 - 60 * 4) {
+                if (edges.size() < edgesCount * 9 / 10) {
                     edgesCount = edges.size();
                     reduceSCCR();
-                    loop();
+                    loopR();
                 }
             } else {
                 if (getElapsed() < SECONDS - 60 - 60 * 3) {
-                    if (edges.size() < edgesCount * 2 / 3) {
+                    if (edges.size() < edgesCount * 4 / 5) {
                         edgesCount = edges.size();
-                        loop();
+                        loopR();
                     }
                 } else {
-                    if (getElapsed() < SECONDS - 60 - 60 * 1) {
-                        if (edges.size() < edgesCount * 2 / 3) {
+                    if (getElapsed() < SECONDS - 60 - 60 * 2) {
+                        if (edges.size() < edgesCount * 3 / 4) {
                             edgesCount = edges.size();
-                            loop();
+                            loopR();
                         }
                     } else {
-                        if (edges.size() < edgesCount * 1 / 2) {
+                        if (edges.size() < edgesCount * 2 / 3) {
                             edgesCount = edges.size();
-                            loop();
+                            loopR();
                         }
                     }
                 }
@@ -1370,7 +1396,7 @@ void readData() {
     path_input += to_string(testNo);
     ifstream in(path_input);
     int t;
-    while (getline(in, s)) {
+    while (getline(cin, s)) {
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -1389,7 +1415,7 @@ void readData() {
     }
     initializeSets();
     for (int j = 1; j <= n; ++j) {
-        getline(in, s);
+        getline(cin, s);
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -1420,7 +1446,6 @@ void readData() {
     }
 }
 
-
 void createInitialDfvsR() {
     checkTime();
     candidatesNodes = candidatesNodesReduced;
@@ -1436,10 +1461,9 @@ void createInitialDfvsR() {
             availableNodesR.push(make_pair(i, getFitness(i)));
         }
     }
-    //cout << candidatesNodes.size() << ' ';
-    //reducePseudoCORE();
-    //doBasicReductionsM();
-    //cout << candidatesNodes.size() << '\n';
+    // cout << candidatesNodes.size() << ' ';
+    loopR();
+    // cout << candidatesNodes.size() << ' ';
     findDfvsR();
     clearSets();
     initializeSets();
@@ -1460,6 +1484,7 @@ void createInitialDfvsM() {
             availableNodesM.push(make_pair(i, getFitness(i)));
         }
     }
+    loopM();
     findDfvsM();
     clearSets();
     initializeSets();
@@ -1600,6 +1625,7 @@ void improveFeedbackVertexSet() {
 
 vector<int> local;
 
+
 void doLocalSearch() {
     checkTime();
     candidatesNodes = candidatesNodesReduced;
@@ -1610,7 +1636,7 @@ void doLocalSearch() {
     edges = edgesReduced;
     availableNode = availableNodeReduced;
     feedbackVertexSetList.clear();
-    fitnessType = 2;
+    fitnessType = 3;
     for (auto i : candidatesNodes) {
         if (!checkNodeCanBeReduced(i)) {
             availableNodesR.push(make_pair(i, getFitness(i)));
@@ -1622,17 +1648,19 @@ void doLocalSearch() {
     }
     checkTime();
     int size = bestFeedbackVertexSet.size();
-    sort(feedbackVertexSetList.begin(), feedbackVertexSetList.end(), [](const int i, const int j) {
-        return getFitness(i) > getFitness(j);
-    });
-    for (int i = size / 3; i < size - size / 3; ++i) {
+    for (int i = 0; i < size; ++i) {
         local.emplace_back(feedbackVertexSetList[i]);
     }
     unsigned seed = rand();
     shuffle(local.begin(), local.end(), default_random_engine(seed));
     size = local.size();
     //cout << "--" << size << '\n';
-    int toBeErasedCounter = rand() % (size * 1 / 2 + 1);
+    vector<pair<int, int> > st = {{1, 2},
+                                  {4, 5},
+                                  {2, 3},
+                                  {9, 10}};
+    int ind = rand() % 3;
+    int toBeErasedCounter = rand() % (size * st[ind].first / st[ind].second + 1);
 
     while (toBeErasedCounter--) {
         checkTime();
@@ -1643,13 +1671,12 @@ void doLocalSearch() {
         feedbackVertexSet.insert(node);
     }
     findDfvsR();
+    //cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     improveFeedbackVertexSet();
-    if (feedbackVertexSet.size() < bestFeedbackVertexSet.size()) {
-        bestFeedbackVertexSet = feedbackVertexSet;
-    }
     clearSets();
     initializeSets();
     local.clear();
+    lastFeedbackVertexSet.clear();
     feedbackVertexSetList.clear();
     //cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
 }
@@ -1666,9 +1693,11 @@ void solveTestcase() {
     for (int i = 1; i <= n; ++i) {
         candidatesNodes.insert(i);
     }
-    cout << candidatesNodes.size() << '\n';
-    loop();
-    cout << candidatesNodes.size() << '\n';
+    //cout << candidatesNodes.size() << '\n';
+    //loopR();
+    //reducePseudoCORE();
+    loopR();
+    //cout << candidatesNodes.size() << '\n';
     candidatesNodesReduced = candidatesNodes;
     inDegreeReducedSimple = inDegreeSimple;
     inDegreeReducedDouble = inDegreeDouble;
@@ -1680,13 +1709,15 @@ void solveTestcase() {
     feedbackVertexSet.clear();
     //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     toBeAvoided = -1;
-    for (fitnessType = 1; fitnessType <= 7; ++fitnessType) {
+    for (fitnessType = 1; fitnessType <= 2; ++fitnessType) {
         checkTime();
         createInitialDfvsR();
-        cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         improveFeedbackVertexSet();
-        cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //   cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
+    lastFeedbackVertexSet = bestFeedbackVertexSet;
+    /*
     for (alpha = 205; alpha <= 295; alpha += 5) {
         checkTime();
         fitnessType = 8;
@@ -1702,15 +1733,18 @@ void solveTestcase() {
         improveFeedbackVertexSet();
         // cout << "()" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
+    */
     /*
     for (fitnessType = 1; fitnessType <= 7; ++fitnessType) {
         cout << "**-" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
     */
     //cout << "(" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+    // cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+
     fitnessType = 1;
     checkTime();
-
+    toBeAvoided = 0;
     for (;;) {
         checkTime();
         doLocalSearch();
@@ -1739,7 +1773,7 @@ void solveTestcase() {
     //    out << it << '\n';
     // }
     // cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
-    //out.close();
+    out.close();
     output.clear();
 }
 
@@ -1757,7 +1791,7 @@ signed main() {
     cout << "time elapsed in seconds: " << double(clock() - begin_) / CLOCKS_PER_SEC << '\n';
     return 0;
     */
-    for (testNo = 165; testNo <= 165; testNo += 2) {
+    for (testNo = 1; testNo <= 1; testNo += 2) {
         //cout << testNo << ' ';
         solveTestcase();
         //cout << getElapsed() << '\n';
