@@ -5,24 +5,21 @@ using namespace std;
 const int SECONDS = 600;
 
 std::chrono::time_point<std::chrono::high_resolution_clock> begin_;
-int n, m, fitnessType, sccIndex, sccCounter, testNo, currentErased, firstTime;
+int n, m, fitnessType, sccIndex, sccCounter, testNo, currentErased;
 string output, s;
 vector<pair<pair<int, int>, int >> toBeErasedBypass, toBeErasedNode;
 vector<pair<pair<int, set<int>::iterator>, int> > stackTarjan;
 vector<pair<int, int>> toBeErasedDOME, toBeErasedSCC;
 set<pair<int, int>> edges, edgesReduced;
-vector<set<int>> inDegreeDouble, outDegreeDouble, inDegreeSimple, outDegreeSimple, inDegreeReducedDouble, outDegreeReducedDouble, inDegreeReducedSimple, outDegreeReducedSimple;
+vector<set<int>> inDegreeReducedSimple, inDegreeDouble, outDegreeDouble, inDegreeSimple, outDegreeSimple, inDegreeReducedDouble, outDegreeReducedDouble, outDegreeReducedSimple;
 vector<bool> availableNode, inStack, availableNodeReduced, visitedCORE;
 vector<int> inNodes, outNodes, localDFVS, local, selfLoopNodes, zeroDegreeNodes, oneDegreeNodes, feedbackVertexSetList, lowLevel, sccStack, currLevel, whichSCC, candidatesSorted;
-set<int> localSet, cliqueCORE, candidatesNodes, candidatesNodesReduced, feedbackVertexSet, bestFeedbackVertexSet, lastFeedbackVertexSet, feedbackVertexSetReduced;
-
-struct cmp {
-    bool inline operator()(const pair<int, long long> &i, const pair<int, long long> &j) {
-        return i.second < j.second || (i.second == j.second && i.first < j.first);
-    }
+set<int> candidatesNodesReduced, localSet, cliqueCORE, candidatesNodes, feedbackVertexSet, bestFeedbackVertexSet, lastFeedbackVertexSet, feedbackVertexSetReduced;
+vector<long long> lastFitness;
+auto cmp = [](pair<long long, int> a, pair<long long, int> b) {
+    return a.first > b.first || (a.first == b.first && a.second > b.second);
 };
-
-priority_queue<pair<int, long long>, vector<pair<int, long long>>, cmp> availableNodes;
+set<pair<long long, int>, decltype(cmp)> availableNodes(cmp);
 
 void doBasicReductions();
 
@@ -73,7 +70,8 @@ long long getFitness(int node);
 double getElapsed();
 
 signed main() {
-    for (testNo = 13; testNo <= 13; testNo += 2) {
+    for (testNo = 189; testNo <= 189; testNo += 2) {
+        cout << (testNo + 1) / 2 << '\n';
         solveTestcase();
     }
     return 0;
@@ -117,10 +115,16 @@ void eraseEdge(int x, int y, int z) {
         outDegreeSimple[y].erase(x);
     }
     if ((z == 1 || z == 3) && !checkNodeCanBeReduced(x)) {
-        availableNodes.push(make_pair(x, getFitness(x)));
+        if (lastFitness[x] != -1) {
+            availableNodes.erase(make_pair(lastFitness[x], x));
+        }
+        availableNodes.insert(make_pair((lastFitness[x] = getFitness(x)), x));
     }
     if ((z == 2 || z == 3) && !checkNodeCanBeReduced(y)) {
-        availableNodes.push(make_pair(y, getFitness(y)));
+        if (lastFitness[y] != -1) {
+            availableNodes.erase(make_pair(lastFitness[y], y));
+        }
+        availableNodes.insert(make_pair((lastFitness[y] = getFitness(y)), y));
     }
 }
 
@@ -143,6 +147,7 @@ void addEdge(int x, int y) {
 
 void initializeSets() {
     checkTime();
+    lastFitness.resize(n + 1, -1);
     visitedCORE.resize(n + 1, false);
     lowLevel.resize(n + 1, 0);
     currLevel.resize(n + 1, 0);
@@ -157,6 +162,7 @@ void initializeSets() {
 
 void clearSets() {
     checkTime();
+    lastFitness.clear();
     visitedCORE.clear();
     whichSCC.clear();
     feedbackVertexSet.clear();
@@ -164,10 +170,7 @@ void clearSets() {
     selfLoopNodes.clear();
     zeroDegreeNodes.clear();
     oneDegreeNodes.clear();
-    while (!availableNodes.empty()) {
-        checkTime();
-        availableNodes.pop();
-    }
+    availableNodes.clear();
     candidatesNodes.clear();
     edges.clear();
     inDegreeSimple.clear();
@@ -176,7 +179,6 @@ void clearSets() {
     outDegreeDouble.clear();
 }
 
-
 void eraseNode(int node) {
     checkTime();
     if (!availableNode[node]) {
@@ -184,27 +186,55 @@ void eraseNode(int node) {
     }
     availableNode[node] = false;
     candidatesNodes.erase(node);
-    for (auto it : inDegreeSimple[node]) {
-        checkTime();
-        toBeErasedNode.emplace_back(make_pair(it, node), 1);
+    availableNodes.erase(make_pair(lastFitness[node], node));
+    while (!inDegreeSimple[node].empty()) {
+        int x = *inDegreeSimple[node].begin();
+        inDegreeSimple[node].erase(inDegreeSimple[node].begin());
+        outDegreeSimple[x].erase(node);
+        edges.erase(make_pair(x, node));
+        if (node != x && !checkNodeCanBeReduced(x)) {
+            if (lastFitness[x] != -1) {
+                availableNodes.erase(make_pair(lastFitness[x], x));
+            }
+            availableNodes.insert(make_pair((lastFitness[x] = getFitness(x)), x));
+        }
     }
-    for (auto it : inDegreeDouble[node]) {
-        checkTime();
-        toBeErasedNode.emplace_back(make_pair(it, node), 1);
+    while (!inDegreeDouble[node].empty()) {
+        int x = *inDegreeDouble[node].begin();
+        inDegreeDouble[node].erase(inDegreeDouble[node].begin());
+        outDegreeDouble[x].erase(node);
+        edges.erase(make_pair(x, node));
+        if (node != x && !checkNodeCanBeReduced(x)) {
+            if (lastFitness[x] != -1) {
+                availableNodes.erase(make_pair(lastFitness[x], x));
+            }
+            availableNodes.insert(make_pair((lastFitness[x] = getFitness(x)), x));
+        }
     }
-    for (auto it : outDegreeSimple[node]) {
-        checkTime();
-        toBeErasedNode.emplace_back(make_pair(node, it), 2);
+    while (!outDegreeSimple[node].empty()) {
+        int x = *outDegreeSimple[node].begin();
+        outDegreeSimple[node].erase(outDegreeSimple[node].begin());
+        inDegreeSimple[x].erase(node);
+        edges.erase(make_pair(node, x));
+        if (node != x && !checkNodeCanBeReduced(x)) {
+            if (lastFitness[x] != -1) {
+                availableNodes.erase(make_pair(lastFitness[x], x));
+            }
+            availableNodes.insert(make_pair((lastFitness[x] = getFitness(x)), x));
+        }
     }
-    for (auto it : outDegreeDouble[node]) {
-        checkTime();
-        toBeErasedNode.emplace_back(make_pair(node, it), 2);
+    while (!outDegreeDouble[node].empty()) {
+        int x = *outDegreeDouble[node].begin();
+        outDegreeDouble[node].erase(outDegreeDouble[node].begin());
+        inDegreeDouble[x].erase(node);
+        edges.erase(make_pair(node, x));
+        if (node != x && !checkNodeCanBeReduced(x)) {
+            if (lastFitness[x] != -1) {
+                availableNodes.erase(make_pair(lastFitness[x], x));
+            }
+            availableNodes.insert(make_pair((lastFitness[x] = getFitness(x)), x));
+        }
     }
-    for (auto it : toBeErasedNode) {
-        checkTime();
-        eraseEdge(it.first.first, it.first.second, it.second);
-    }
-    toBeErasedNode.clear();
 }
 
 void bypassNode(int node) {
@@ -261,20 +291,17 @@ void bypassNode(int node) {
             if (it1 == it2) {
                 selfLoopNodes.emplace_back(it1);
             }
-            checkNodeCanBeReduced(it1);
-            availableNodes.push(make_pair(it1, getFitness(it1)));
             checkNodeCanBeReduced(it2);
-            availableNodes.push(make_pair(it2, getFitness(it2)));
+            if (lastFitness[it2] != -1) {
+                availableNodes.erase(make_pair(lastFitness[it2], it2));
+            }
+            availableNodes.insert(make_pair((lastFitness[it2] = getFitness(it2)), it2));
         }
-    }
-
-    if (inNodes.size() == 1) {
-        availableNodes.push(
-                make_pair(inNodes.back(), getFitness(inNodes.back())));
-    }
-    if (outNodes.size() == 1) {
-        availableNodes.push(
-                make_pair(outNodes.back(), getFitness(outNodes.back())));
+        checkNodeCanBeReduced(it1);
+        if (lastFitness[it1] != -1) {
+            availableNodes.erase(make_pair(lastFitness[it1], it1));
+        }
+        availableNodes.insert(make_pair((lastFitness[it1] = getFitness(it1)), it1));
     }
     inNodes.clear();
     outNodes.clear();
@@ -624,7 +651,8 @@ void doBasicReductions() {
 
 void loop() {
     bool change = true;
-    while (change) {
+    char count = 0;
+    while (change && count++ < 3) {
         change = false;
         change |= reduceSCC();
         doBasicReductions();
@@ -643,16 +671,15 @@ void findDFVS() {
     loop();
     while (!availableNodes.empty()) {
         checkTime();
-        pair<int, long long> topNode = availableNodes.top();
-        availableNodes.pop();
-        if (!availableNode[topNode.first] ||
-            topNode.second != getFitness(topNode.first)) {
+        pair<int, long long> topNode = make_pair((*availableNodes.begin()).second, (*availableNodes.begin()).first);
+        availableNodes.erase(availableNodes.begin());
+        if (!availableNode[topNode.first]) {
             continue;
         }
         ++currentErased;
         eraseNode(topNode.first);
         doBasicReductions();
-        if (firstTime && getElapsed() < SECONDS - 60 && edges.size() < edgesCount * 9 / 10) {
+        if (getElapsed() < SECONDS - 60 && edges.size() < edgesCount * 3 / 4) {
             edgesCount = edges.size();
             loop();
         }
@@ -730,13 +757,16 @@ void createInitialDFVS() {
     outDegreeDouble = outDegreeReducedDouble;
     edges = edgesReduced;
     availableNode = availableNodeReduced;
-    for (auto i : candidatesNodes) {
+    for (auto x : candidatesNodes) {
         checkTime();
-        if (!checkNodeCanBeReduced(i)) {
-            availableNodes.push(make_pair(i, getFitness(i)));
+        if (!checkNodeCanBeReduced(x)) {
+            if (lastFitness[x] != -1) {
+                availableNodes.erase(make_pair(lastFitness[x], x));
+            }
+            availableNodes.insert(make_pair(getFitness(x), x));
+            lastFitness[x] = getFitness(x);
         }
     }
-    loop();
     cout << candidatesNodes.size() << '\n';
     findDFVS();
     clearSets();
@@ -810,9 +840,7 @@ void improveFeedbackVertexSet() {
         int node = localDFVS.back();
         localDFVS.pop_back();
         bool dag = true;
-        if (inDegreeReducedSimple[node].count(node) || inDegreeReducedDouble[node].count(node)) {
-            continue;
-        }
+
         for (auto it : inDegreeReducedDouble[node]) {
             checkTime();
             if (candidatesNodes.count(it)) {
@@ -926,9 +954,13 @@ void doLocalSearch() {
         }
     }
     doBasicReductions();
-    for (auto i : candidatesNodes) {
-        if (!checkNodeCanBeReduced(i)) {
-            availableNodes.push(make_pair(i, getFitness(i)));
+    for (auto x : candidatesNodes) {
+        if (!checkNodeCanBeReduced(x)) {
+            if (lastFitness[x] != -1) {
+                availableNodes.erase(make_pair(lastFitness[x], x));
+            }
+            availableNodes.insert(make_pair(getFitness(x), x));
+            lastFitness[x] = getFitness(x);
         }
     }
     cout << "--" << getElapsed() << '\n';
@@ -979,8 +1011,8 @@ long long getFitness(int node) {
                1LL * (inDegreeSimple[node].size()) * (outDegreeSimple[node].size());
     }
     if (fitnessType == 2) {
-        return 1LL * (inDegreeSimple[node].size() + 2LL * outDegreeDouble[node].size()) *
-               (outDegreeSimple[node].size() + 2LL * outDegreeDouble[node].size());
+        return 1LL * (inDegreeSimple[node].size() + inDegreeDouble[node].size()) *
+               (outDegreeSimple[node].size() + outDegreeDouble[node].size());
     }
     return 0;
 }
@@ -1006,22 +1038,18 @@ void solveTestcase() {
     edgesReduced = edges;
     availableNodeReduced = availableNode;
     feedbackVertexSet.clear();
-    cout << "()" << getElapsed() << '\n';
-    firstTime = 1;
     for (fitnessType = 1; fitnessType <= 1; ++fitnessType) {
         checkTime();
         createInitialDFVS();
-        cout << "--";
         improveFeedbackVertexSet();
         cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
-    firstTime = 0;
     cout << "()" << getElapsed() << '\n';
     fitnessType = 1;
     checkTime();
     clearSets();
     initializeSets();
-    for (int i = 1; i <= 30000; ++i) {
+    for (int i = 1;; ++i) {
         checkTime();
         doLocalSearch();
     }
