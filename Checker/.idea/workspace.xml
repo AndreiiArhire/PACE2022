@@ -13,12 +13,6 @@
   <component name="ChangeListManager">
     <list default="true" id="bc9bc09a-d7fa-4b0a-a00e-fffad15df6e2" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/main.cpp.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/main.cpp.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/objects.a" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Checker.dir/objects.a" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Checker.exe" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Checker.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../adhoc-results/grader_test133.out" beforeDir="false" afterPath="$PROJECT_DIR$/../adhoc-results/grader_test133.out" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../submit/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../submit/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../submit/cmake-build-debug/CMakeFiles/submit.dir/main.cpp.obj" beforeDir="false" afterPath="$PROJECT_DIR$/../submit/cmake-build-debug/CMakeFiles/submit.dir/main.cpp.obj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../submit/cmake-build-debug/CMakeFiles/submit.dir/objects.a" beforeDir="false" afterPath="$PROJECT_DIR$/../submit/cmake-build-debug/CMakeFiles/submit.dir/objects.a" afterDir="false" />
@@ -141,7 +135,7 @@
       <workItem from="1650230430402" duration="904000" />
       <workItem from="1650287144292" duration="628000" />
       <workItem from="1650305404132" duration="2004000" />
-      <workItem from="1650314137782" duration="594000" />
+      <workItem from="1650314137782" duration="2096000" />
     </task>
     <servers />
   </component>

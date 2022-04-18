@@ -4,20 +4,26 @@
 using namespace std;
 const int SECONDS = 600;
 
+struct pair_hash {
+    std::size_t operator()(const std::pair<int, int> &v) const {
+        return 1LL * (1LL * v.first + 1LL * v.second * 666013) % 1000000007;
+    }
+};
+
 std::chrono::time_point<std::chrono::high_resolution_clock> begin_;
 int n, m, fitnessType, sccIndex, sccCounter, testNo, currentErased, firstTime;
 string output, s;
 vector<pair<pair<int, int>, int >> toBeErasedBypass;
-vector<pair<pair<int, set<int>::iterator>, int> > stackTarjan;
+vector<pair<pair<int, unordered_set<int>::iterator>, int> > stackTarjan;
 vector<pair<int, int>> toBeErasedDOME, toBeErasedSCC;
-set<pair<int, int>> edges, edgesReduced;
-vector<set<int>> inDegreeReducedSimple, inDegreeSimple, outDegreeSimple, outDegreeReducedSimple;
+unordered_set<pair<int, int>, pair_hash> edges, edgesReduced;
+vector<unordered_set<int>> inDegreeReducedSimple, inDegreeSimple, outDegreeSimple, outDegreeReducedSimple;
 vector<vector<int>> degreeDoubleList, degreeDoublePointer;
 vector<vector<int>> degreeDoubleListReduced, degreeDoublePointerReduced;
 vector<int> degreeDoubleSize, degreeDoubleSizeReduced;
 vector<bool> availableNode, inStack, availableNodeReduced, visitedCORE;
 vector<int> inNodes, outNodes, localDFVS, local, selfLoopNodes, zeroDegreeNodes, oneDegreeNodes, lowLevel, sccStack, currLevel, whichSCC, candidatesSorted;
-set<int> candidatesNodesReduced, localSet, cliqueCORE, candidatesNodes, feedbackVertexSet, bestFeedbackVertexSet, lastFeedbackVertexSet, feedbackVertexSetReduced;
+unordered_set<int> candidatesNodesReduced, localSet, cliqueCORE, candidatesNodes, feedbackVertexSet, bestFeedbackVertexSet, lastFeedbackVertexSet, feedbackVertexSetReduced;
 vector<long long> lastFitness;
 auto cmp = [](pair<long long, int> a, pair<long long, int> b) {
     return a.first > b.first || (a.first == b.first && a.second > b.second);
@@ -155,8 +161,8 @@ void initializeSets() {
     inStack.resize(n + 1, false);
     whichSCC.resize(n + 1, 0);
     availableNode.resize(n + 1, true);
-    inDegreeSimple.resize(n + 1, set<int>());
-    outDegreeSimple.resize(n + 1, set<int>());
+    inDegreeSimple.resize(n + 1, unordered_set<int>());
+    outDegreeSimple.resize(n + 1, unordered_set<int>());
     degreeDoublePointer.resize(n + 1, vector<int>());
     degreeDoubleList.resize(n + 1, vector<int>());
     degreeDoubleSize.resize(n + 1, 0);
