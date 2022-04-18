@@ -93,7 +93,7 @@ signed main() {
     map<int, int> mp;
     inDegree.resize(1000000, set<int>());
     outDegree.resize(1000000, set<int>());
-    for (int t = 155; t <= 155; t += 2) {
+    for (int t = 133; t <= 133; t += 2) {
         bad.clear();
         cout << "test " << t << " started\n";
         string path_in =
