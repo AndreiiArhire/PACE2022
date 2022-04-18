@@ -17,10 +17,7 @@ vector<pair<pair<int, int>, int >> toBeErasedBypass;
 vector<pair<pair<int, unordered_set<int>::iterator>, int> > stackTarjan;
 vector<pair<int, int>> toBeErasedDOME, toBeErasedSCC;
 unordered_set<pair<int, int>, pair_hash> edges, edgesReduced;
-vector<unordered_set<int>> inDegreeReducedSimple, inDegreeSimple, outDegreeSimple, outDegreeReducedSimple;
-vector<vector<int>> degreeDoubleList, degreeDoublePointer;
-vector<vector<int>> degreeDoubleListReduced, degreeDoublePointerReduced;
-vector<int> degreeDoubleSize, degreeDoubleSizeReduced;
+vector<unordered_set<int>> inDegreeReducedSimple, inDegreeDouble, outDegreeDouble, inDegreeSimple, outDegreeSimple, inDegreeReducedDouble, outDegreeReducedDouble, outDegreeReducedSimple;
 vector<bool> availableNode, inStack, availableNodeReduced, visitedCORE;
 vector<int> inNodes, outNodes, localDFVS, local, selfLoopNodes, zeroDegreeNodes, oneDegreeNodes, lowLevel, sccStack, currLevel, whichSCC, candidatesSorted;
 unordered_set<int> candidatesNodesReduced, localSet, cliqueCORE, candidatesNodes, feedbackVertexSet, bestFeedbackVertexSet, lastFeedbackVertexSet, feedbackVertexSetReduced;
@@ -91,8 +88,8 @@ bool checkNodeCanBeReduced(int node) {
     if (!availableNode[node]) {
         return false;
     }
-    if ((inDegreeSimple[node].empty() && degreeDoubleSize[node] == 0) ||
-        (outDegreeSimple[node].empty() && degreeDoubleSize[node] == 0)) {
+    if ((inDegreeSimple[node].empty() && inDegreeDouble[node].empty()) ||
+        (outDegreeSimple[node].empty() && outDegreeDouble[node].empty())) {
         zeroDegreeNodes.emplace_back(node);
         return true;
     }
@@ -101,8 +98,8 @@ bool checkNodeCanBeReduced(int node) {
         return true;
     }
 
-    if (inDegreeSimple[node].size() + degreeDoubleSize[node] == 1 ||
-        outDegreeSimple[node].size() + degreeDoubleSize[node] == 1) {
+    if (inDegreeSimple[node].size() + inDegreeDouble[node].size() == 1 ||
+        outDegreeSimple[node].size() + outDegreeDouble[node].size() == 1) {
         oneDegreeNodes.emplace_back(node);
         return true;
     }
@@ -113,10 +110,14 @@ void eraseEdge(int x, int y, int z) {
     checkTime();
     edges.erase(make_pair(x, y));
     outDegreeSimple[x].erase(y);
+    outDegreeDouble[x].erase(y);
     inDegreeSimple[y].erase(x);
+    inDegreeDouble[y].erase(x);
     if (edges.count(make_pair(y, x))) {
         edges.erase(make_pair(y, x));
+        inDegreeDouble[x].erase(y);
         inDegreeSimple[x].erase(y);
+        outDegreeDouble[y].erase(x);
         outDegreeSimple[y].erase(x);
     }
     if ((z == 1 || z == 3) && !checkNodeCanBeReduced(x)) {
@@ -143,12 +144,10 @@ void addEdge(int x, int y) {
         edges.insert(make_pair(x, y));
         inDegreeSimple[x].erase(y);
         outDegreeSimple[y].erase(x);
-        degreeDoubleList[x].emplace_back(y);
-        degreeDoublePointer[x].emplace_back(degreeDoubleList[x].size());
-        ++degreeDoubleSize[x];
-        degreeDoubleList[y].emplace_back(x);
-        degreeDoublePointer[y].emplace_back(degreeDoubleList[y].size());
-        ++degreeDoubleSize[y];
+        inDegreeDouble[x].insert(y);
+        inDegreeDouble[y].insert(x);
+        outDegreeDouble[x].insert(y);
+        outDegreeDouble[y].insert(x);
     }
 }
 
@@ -162,10 +161,9 @@ void initializeSets() {
     whichSCC.resize(n + 1, 0);
     availableNode.resize(n + 1, true);
     inDegreeSimple.resize(n + 1, unordered_set<int>());
+    inDegreeDouble.resize(n + 1, unordered_set<int>());
     outDegreeSimple.resize(n + 1, unordered_set<int>());
-    degreeDoublePointer.resize(n + 1, vector<int>());
-    degreeDoubleList.resize(n + 1, vector<int>());
-    degreeDoubleSize.resize(n + 1, 0);
+    outDegreeDouble.resize(n + 1, unordered_set<int>());
 }
 
 void clearSets() {
@@ -182,10 +180,9 @@ void clearSets() {
     candidatesNodes.clear();
     edges.clear();
     inDegreeSimple.clear();
+    inDegreeDouble.clear();
     outDegreeSimple.clear();
-    degreeDoublePointer.clear();
-    degreeDoubleList.clear();
-    degreeDoubleSize.clear();
+    outDegreeDouble.clear();
 }
 
 void eraseNode(int node) {
@@ -209,15 +206,24 @@ void eraseNode(int node) {
             availableNodes.insert(make_pair((lastFitness[x] = getFitness(x)), x));
         }
     }
-    while (!degreeDoubleList[node].empty()) {
-        int x = degreeDoubleList[node].back();
-        degreeDoubleList[node].pop_back();
-        degreeDoublePointer[node].pop_back();
-        if (!availableNode[x]) {
-            continue;
-        }
-        --degreeDoubleSize[x];
+    while (!inDegreeDouble[node].empty()) {
+        checkTime();
+        int x = *inDegreeDouble[node].begin();
+        inDegreeDouble[node].erase(inDegreeDouble[node].begin());
+        outDegreeDouble[x].erase(node);
         edges.erase(make_pair(x, node));
+        if (node != x && !checkNodeCanBeReduced(x)) {
+            if (lastFitness[x] != -1) {
+                availableNodes.erase(make_pair(lastFitness[x], x));
+            }
+            availableNodes.insert(make_pair((lastFitness[x] = getFitness(x)), x));
+        }
+    }
+    while (!outDegreeSimple[node].empty()) {
+        checkTime();
+        int x = *outDegreeSimple[node].begin();
+        outDegreeSimple[node].erase(outDegreeSimple[node].begin());
+        inDegreeSimple[x].erase(node);
         edges.erase(make_pair(node, x));
         if (node != x && !checkNodeCanBeReduced(x)) {
             if (lastFitness[x] != -1) {
@@ -226,12 +232,11 @@ void eraseNode(int node) {
             availableNodes.insert(make_pair((lastFitness[x] = getFitness(x)), x));
         }
     }
-    degreeDoubleSize[node] = 0;
-    while (!outDegreeSimple[node].empty()) {
+    while (!outDegreeDouble[node].empty()) {
         checkTime();
-        int x = *outDegreeSimple[node].begin();
-        outDegreeSimple[node].erase(outDegreeSimple[node].begin());
-        inDegreeSimple[x].erase(node);
+        int x = *outDegreeDouble[node].begin();
+        outDegreeDouble[node].erase(outDegreeDouble[node].begin());
+        inDegreeDouble[x].erase(node);
         edges.erase(make_pair(node, x));
         if (node != x && !checkNodeCanBeReduced(x)) {
             if (lastFitness[x] != -1) {
@@ -251,13 +256,13 @@ void bypassNode(int node) {
         selfLoopNodes.emplace_back(node);
         return;
     }
-    if ((inDegreeSimple[node].empty() && degreeDoubleSize[node] == 0) ||
-        (outDegreeSimple[node].empty() && degreeDoubleSize[node] == 0)) {
+    if ((inDegreeSimple[node].empty() && inDegreeDouble[node].empty()) ||
+        (outDegreeSimple[node].empty() && outDegreeDouble[node].empty())) {
         zeroDegreeNodes.emplace_back(node);
         return;
     }
-    if (inDegreeSimple[node].size() + degreeDoubleSize[node] != 1 &&
-        outDegreeSimple[node].size() + degreeDoubleSize[node] != 1) {
+    if (inDegreeSimple[node].size() + inDegreeDouble[node].size() != 1 &&
+        outDegreeSimple[node].size() + outDegreeDouble[node].size() != 1) {
         return;
     }
     availableNode[node] = false;
@@ -267,24 +272,20 @@ void bypassNode(int node) {
         toBeErasedBypass.emplace_back(make_pair(it, node), 0);
         inNodes.emplace_back(it);
     }
+    for (auto it :inDegreeDouble[node]) {
+        checkTime();
+        toBeErasedBypass.emplace_back(make_pair(it, node), 0);
+        inNodes.emplace_back(it);
+    }
     for (auto it :outDegreeSimple[node]) {
         checkTime();
         toBeErasedBypass.emplace_back(make_pair(node, it), 0);
         outNodes.emplace_back(it);
     }
-    int prev = 0;
-    for (int i = 0; i < degreeDoubleList[node].size(); i = degreeDoublePointer[node][i]) {
+    for (auto it :outDegreeDouble[node]) {
         checkTime();
-        auto it = degreeDoubleList[node][i];
-        if (!availableNode[it]) {
-            degreeDoublePointer[node][prev] = degreeDoublePointer[node][i];
-            continue;
-        }
-        toBeErasedBypass.emplace_back(make_pair(it, node), 0);
-        inNodes.emplace_back(it);
         toBeErasedBypass.emplace_back(make_pair(node, it), 0);
         outNodes.emplace_back(it);
-        prev = i;
     }
     for (auto it : toBeErasedBypass) {
         checkTime();
@@ -466,8 +467,8 @@ bool reduceCORE() {
     }
     checkTime();
     sort(candidatesSorted.begin(), candidatesSorted.end(), [](const int i, const int j) {
-        return degreeDoubleSize[i] < degreeDoubleSize[j] ||
-               (degreeDoubleSize[i] == degreeDoubleSize[j] &&
+        return outDegreeDouble[i].size() < outDegreeDouble[j].size() ||
+               (outDegreeDouble[i].size() == outDegreeDouble[j].size() &&
                 1LL * inDegreeSimple[i].size() * outDegreeSimple[i].size() <
                 1LL * inDegreeSimple[j].size() * outDegreeSimple[j].size());
     });
@@ -481,16 +482,9 @@ bool reduceCORE() {
             visitedCORE[node] = true;
             continue;
         }
-        int prev = 0;
-        for (int i = 0; i < degreeDoubleList[node].size(); i = degreeDoublePointer[node][i]) {
+        for (auto it : outDegreeDouble[node]) {
             checkTime();
-            auto it = degreeDoubleList[node][i];
-            if (!availableNode[it]) {
-                degreeDoublePointer[node][prev] = degreeDoublePointer[node][i];
-                continue;
-            }
             cliqueCORE.insert(it);
-            prev = i;
         }
         bool isCore = true;
         if (cliqueCORE.empty()) {
@@ -500,19 +494,11 @@ bool reduceCORE() {
             checkTime();
             int sz = 1;
             if (isCore) {
-                int node = it;
-                int prev = 0;
-                for (int i = 0; i < degreeDoubleList[node].size(); i = degreeDoublePointer[node][i]) {
+                for (auto it3 : outDegreeDouble[it]) {
                     checkTime();
-                    auto it = degreeDoubleList[node][i];
-                    if (!availableNode[it]) {
-                        degreeDoublePointer[node][prev] = degreeDoublePointer[node][i];
-                        continue;
-                    }
-                    if (node != it && cliqueCORE.count(it)) {
+                    if (it != it3 && cliqueCORE.count(it3)) {
                         ++sz;
                     }
-                    prev = i;
                 }
                 if (sz != cliqueCORE.size()) {
                     isCore = false;
@@ -657,8 +643,8 @@ void doBasicReductions() {
             checkTime();
             int node = zeroDegreeNodes.back();
             zeroDegreeNodes.pop_back();
-            if ((degreeDoubleSize[node] != 0 || inDegreeSimple[node].empty()) &&
-                (!outDegreeSimple[node].empty() || degreeDoubleSize[node] != 0)) {
+            if ((!inDegreeDouble[node].empty() || !inDegreeSimple[node].empty()) &&
+                (!outDegreeSimple[node].empty() || !outDegreeDouble[node].empty())) {
                 continue;
             }
             eraseNode(node);
@@ -742,8 +728,6 @@ void readData() {
         is >> n >> m >> t;
         break;
     }
-    degreeDoubleListReduced.resize(n + 1, vector<int>());
-    degreeDoublePointerReduced.resize(n + 1, vector<int>());
     initializeSets();
     for (int j = 1; j <= n; ++j) {
         getline(in, s);
@@ -780,10 +764,9 @@ void createInitialDFVS() {
     checkTime();
     candidatesNodes = candidatesNodesReduced;
     inDegreeSimple = inDegreeReducedSimple;
-    degreeDoublePointer = degreeDoublePointerReduced;
-    degreeDoubleList = degreeDoubleListReduced;
-    degreeDoubleSize = degreeDoubleSizeReduced;
+    inDegreeDouble = inDegreeReducedDouble;
     outDegreeSimple = outDegreeReducedSimple;
+    outDegreeDouble = outDegreeReducedDouble;
     edges = edgesReduced;
     availableNode = availableNodeReduced;
     for (auto x : candidatesNodes) {
@@ -800,7 +783,6 @@ void createInitialDFVS() {
     findDFVS();
     clearSets();
     initializeSets();
-    cout << feedbackVertexSetReduced.size() + bestFeedbackVertexSet.size() << '\n';
 }
 
 void improveFeedbackVertexSet() {
@@ -831,17 +813,14 @@ void improveFeedbackVertexSet() {
     for (auto it : edges) {
         checkTime();
         if (edges.count(make_pair(it.second, it.first))) {
-            degreeDoubleList[it.first].emplace_back(it.second);
-            degreeDoublePointer[it.first].emplace_back(degreeDoubleList[it.first].size());
-            ++degreeDoubleSize[it.first];
-            degreeDoubleList[it.second].emplace_back(it.first);
-            degreeDoublePointer[it.second].emplace_back(degreeDoubleList[it.second].size());
-            ++degreeDoubleSize[it.second];
+            outDegreeDouble[it.first].insert(it.second);
+            inDegreeDouble[it.second].insert(it.first);
         } else {
             outDegreeSimple[it.first].insert(it.second);
             inDegreeSimple[it.second].insert(it.first);
         }
     }
+
     localDFVS.reserve(lastFeedbackVertexSet.size());
     for (auto it : lastFeedbackVertexSet) {
         checkTime();
@@ -857,19 +836,12 @@ void improveFeedbackVertexSet() {
         int node = localDFVS.back();
         localDFVS.pop_back();
         bool dag = true;
-        int prev = 0;
-        for (int i = 0; i < degreeDoubleListReduced[node].size(); i = degreeDoublePointerReduced[node][i]) {
+        for (auto it : inDegreeReducedDouble[node]) {
             checkTime();
-            auto it = degreeDoubleListReduced[node][i];
-            if (!availableNodeReduced[it]) {
-                degreeDoublePointerReduced[node][prev] = degreeDoublePointerReduced[node][i];
-                continue;
-            }
             if (candidatesNodes.count(it)) {
                 dag = false;
                 break;
             }
-            prev = i;
         }
         if (!dag) {
             continue;
@@ -971,12 +943,8 @@ void doLocalSearch() {
     for (auto it : edges) {
         checkTime();
         if (edges.count(make_pair(it.second, it.first))) {
-            degreeDoubleList[it.first].emplace_back(it.second);
-            degreeDoublePointer[it.first].emplace_back(degreeDoubleList[it.first].size());
-            ++degreeDoubleSize[it.first];
-            degreeDoubleList[it.second].emplace_back(it.first);
-            degreeDoublePointer[it.second].emplace_back(degreeDoubleList[it.second].size());
-            ++degreeDoubleSize[it.second];
+            outDegreeDouble[it.first].insert(it.second);
+            inDegreeDouble[it.second].insert(it.first);
         } else {
             outDegreeSimple[it.first].insert(it.second);
             inDegreeSimple[it.second].insert(it.first);
@@ -1018,34 +986,33 @@ void checkTime() {
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
     double sec = elapsed.count() * 1e-9;
     if (sec >= SECONDS - 30) {
-        string path_output =
-                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
-        ofstream out(path_output);
+        //string path_output =R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
+        //ofstream out(path_output);
         ios_base::sync_with_stdio(false);
         cout.tie();
-        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
-        out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         for (auto it: feedbackVertexSetReduced) {
             output += to_string(it) + '\n';
         }
         for (auto node : bestFeedbackVertexSet) {
             output += to_string(node) + '\n';
         }
-        out << output;
-        out.close();
-        output.clear();
+        cout << output;
+        //out.close();
+        //output.clear();
         exit(0);
     }
 }
 
 long long getFitness(int node) {
     if (fitnessType == 1) {
-        return 1LL * degreeDoubleSize[node] * (long long) 1e11 +
+        return 1LL * outDegreeDouble[node].size() * (long long) 1e11 +
                1LL * (inDegreeSimple[node].size()) * (outDegreeSimple[node].size());
     }
     if (fitnessType == 2) {
-        return 1LL * (inDegreeSimple[node].size() + degreeDoubleSize[node]) *
-               (outDegreeSimple[node].size() + degreeDoubleSize[node]);
+        return 1LL * (inDegreeSimple[node].size() + inDegreeDouble[node].size()) *
+               (outDegreeSimple[node].size() + outDegreeDouble[node].size());
     }
     return 0;
 }
@@ -1064,23 +1031,9 @@ void solveTestcase() {
     loop();
     candidatesNodesReduced = candidatesNodes;
     inDegreeReducedSimple = inDegreeSimple;
-    for (auto node : candidatesNodesReduced) {
-        int prev = 0;
-        for (int i = 0; i < degreeDoubleList[node].size(); i = degreeDoublePointer[node][i]) {
-            checkTime();
-            auto it = degreeDoubleList[node][i];
-            if (!availableNode[it]) {
-                degreeDoublePointer[node][prev] = degreeDoublePointer[node][i];
-                continue;
-            }
-            degreeDoubleListReduced[node].emplace_back(it);
-            degreeDoublePointerReduced[node].emplace_back(degreeDoubleListReduced[node].size());
-            prev = i;
-        }
-    }
-
-    degreeDoubleSizeReduced = degreeDoubleSize;
+    inDegreeReducedDouble = inDegreeDouble;
     outDegreeReducedSimple = outDegreeSimple;
+    outDegreeReducedDouble = outDegreeDouble;
     feedbackVertexSetReduced = feedbackVertexSet;
     edgesReduced = edges;
     availableNodeReduced = availableNode;
