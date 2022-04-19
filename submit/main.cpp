@@ -76,8 +76,8 @@ long long getFitness(int node);
 double getElapsed();
 
 signed main() {
-    for (testNo = 133; testNo <= 133; testNo += 2) {
-        cout << (testNo + 1) / 2 << '\n';
+    for (testNo = 189; testNo <= 189; testNo += 2) {
+        //cout << (testNo + 1) / 2 << '\n';
         solveTestcase();
     }
     return 0;
@@ -690,8 +690,7 @@ void findDFVS() {
         ++currentErased;
         eraseNode(topNode.first);
         doBasicReductions();
-        if (getElapsed() < SECONDS - 60 &&
-            (edges.size() * 4 < edgesCount * 3 || (edges.size() * 10 < edgesCount * 9 && !firstTime))) {
+        if (edges.size() * 10 < edgesCount * 9 || (edges.size() * 10 < edgesCount * 9 && !firstTime)) {
             edgesCount = edges.size();
             loop();
         }
@@ -711,7 +710,7 @@ void readData() {
     path_input += to_string(testNo);
     ifstream in(path_input);
     int t;
-    while (getline(in, s)) {
+    while (getline(cin, s)) {
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -730,7 +729,7 @@ void readData() {
     }
     initializeSets();
     for (int j = 1; j <= n; ++j) {
-        getline(in, s);
+        getline(cin, s);
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -779,7 +778,7 @@ void createInitialDFVS() {
             lastFitness[x] = getFitness(x);
         }
     }
-    cout << candidatesNodes.size() << '\n';
+    //cout << candidatesNodes.size() << '\n';
     findDFVS();
     clearSets();
     initializeSets();
@@ -898,7 +897,7 @@ void improveFeedbackVertexSet() {
 
 void doLocalSearch() {
     checkTime();
-    cout << "++" << getElapsed() << '\n';
+    //cout << "++" << getElapsed() << '\n';
     fitnessType = 2;
     checkTime();
     for (auto node : bestFeedbackVertexSet) {
@@ -961,12 +960,12 @@ void doLocalSearch() {
             lastFitness[x] = getFitness(x);
         }
     }
-    cout << "--" << getElapsed() << '\n';
+    //cout << "--" << getElapsed() << '\n';
     findDFVS();
     clearSets();
     initializeSets();
     improveFeedbackVertexSet();
-    cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+    //cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     clearSets();
     initializeSets();
     local.clear();
@@ -1044,10 +1043,10 @@ void solveTestcase() {
         clearSets();
         initializeSets();
         improveFeedbackVertexSet();
-        cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
     firstTime = 1;
-    cout << "()" << getElapsed() << '\n';
+    //cout << "()" << getElapsed() << '\n';
     clearSets();
     initializeSets();
     for (;;) {
