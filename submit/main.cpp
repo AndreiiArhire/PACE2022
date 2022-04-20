@@ -16,76 +16,13 @@ string output, s;
 vector<pair<pair<int, int>, int >> toBeErasedBypass;
 vector<pair<pair<int, unordered_set<int>::iterator>, int> > stackTarjan;
 vector<pair<int, int>> toBeErasedDOME, toBeErasedSCC;
-//unordered_set<pair<int, int>, pair_hash> edges;
+unordered_set<pair<int, int>, pair_hash> edges;
 vector<pair<int, int>> edgesReduced;
 vector<unordered_set<int>> inDegreeReducedSimple, degreeDouble, inDegreeSimple, outDegreeSimple, degreeReducedDouble, outDegreeReducedSimple;
 vector<bool> availableNode, inStack, availableNodeReduced, visitedCORE;
 vector<int> inNodes, outNodes, localDFVS, local, selfLoopNodes, zeroDegreeNodes, oneDegreeNodes, lowLevel, sccStack, currLevel, whichSCC, candidatesSorted;
 unordered_set<int> candidatesNodesReduced, localSet, cliqueCORE, candidatesNodes, feedbackVertexSet, bestFeedbackVertexSet, lastFeedbackVertexSet, feedbackVertexSetReduced;
 vector<long long> lastFitness;
-
-
-struct hash2 {
-    int n{};
-    pair<int, int> v{};
-};
-
-vector<hash2> lEdges;
-int stackSizeEdges, counterEdges;
-vector<int> stEdges, hEdges;
-const int MOD = 666013;
-
-inline bool findEdge(const pair<int, int> &y) {
-    int i = hEdges[(y.first * 97 + y.second) - ((y.first * 97 + y.second) / MOD) * MOD];
-    while (i != -1 && lEdges[i].v != y) {
-        i = lEdges[i].n;
-    }
-    return i != -1;
-}
-
-inline void insertEdge(const pair<int, int> &y) {
-    if (findEdge(y)) {
-        return;
-    }
-    int hash = (y.first * 97 + y.second) - ((y.first * 97 + y.second) / MOD) * MOD;
-    int p;
-    if (!stEdges.empty()) {
-        p = stEdges.back();
-        stEdges.pop_back();
-    } else {
-        p = stackSizeEdges++;
-    }
-    if (p == lEdges.size()) {
-        hash2 temp;
-        lEdges.emplace_back(temp);
-    }
-    lEdges[p].v = y;
-    lEdges[p].n = hEdges[hash];
-    hEdges[hash] = p;
-    ++counterEdges;
-}
-
-inline void eraseEdge(const pair<int, int> &y) {
-    int hash = (y.first * 97 + y.second) - ((y.first * 97 + y.second) / MOD) * MOD;
-    int i = hEdges[hash];
-    if (i == -1) {
-        return;
-    }
-    if (lEdges[i].v == y) {
-        stEdges.emplace_back(i);
-        hEdges[hash] = lEdges[i].n;
-        --counterEdges;
-    } else {
-        while (lEdges[i].n != -1 && lEdges[lEdges[i].n].v != y) {
-            i = lEdges[i].n;
-        }
-        if (lEdges[i].n != -1) {
-            stEdges.emplace_back(lEdges[i].n);
-            lEdges[i].n = lEdges[lEdges[i].n].n;
-            --counterEdges;
-        }
-    }
-}
 
 auto cmp = [](pair<long long, int> a, pair<long long, int> b) {
     return a.first > b.first || (a.first == b.first && a.second > b.second);
@@ -142,7 +79,7 @@ double getElapsed();
 
 signed main() {
     for (testNo = 189; testNo <= 189; testNo += 2) {
-        cout << (testNo + 1) / 2 << '\n';
+        //cout << (testNo + 1) / 2 << '\n';
         solveTestcase();
     }
     return 0;
@@ -158,7 +95,7 @@ bool checkNodeCanBeReduced(int node) {
         zeroDegreeNodes.emplace_back(node);
         return true;
     }
-    if (findEdge(make_pair(node, node)) /*edges.count(make_pair(node, node))*/) {
+    if (edges.count(make_pair(node, node))) {
         selfLoopNodes.emplace_back(node);
         return true;
     }
@@ -173,15 +110,13 @@ bool checkNodeCanBeReduced(int node) {
 
 void eraseEdge(int x, int y, int z) {
     checkTime();
-    //edges.erase(make_pair(x, y));
-    eraseEdge(make_pair(x, y));
+    edges.erase(make_pair(x, y));
     outDegreeSimple[x].erase(y);
     degreeDouble[x].erase(y);
     inDegreeSimple[y].erase(x);
     degreeDouble[y].erase(x);
-    if (findEdge(make_pair(y, x)) /*edges.count(make_pair(y, x))*/) {
-        //edges.erase(make_pair(y, x));
-        eraseEdge(make_pair(y, x));
+    if (edges.count(make_pair(y, x))) {
+        edges.erase(make_pair(y, x));
         degreeDouble[x].erase(y);
         inDegreeSimple[x].erase(y);
         degreeDouble[y].erase(x);
@@ -203,14 +138,12 @@ void eraseEdge(int x, int y, int z) {
 
 void addEdge(int x, int y) {
     checkTime();
-    if (!findEdge(make_pair(y, x)) /*!edges.count(make_pair(y, x))*/ || x == y) {
-        //edges.insert(make_pair(x, y));
-        insertEdge(make_pair(x, y));
+    if (!edges.count(make_pair(y, x)) || x == y) {
+        edges.insert(make_pair(x, y));
         inDegreeSimple[y].insert(x);
         outDegreeSimple[x].insert(y);
     } else {
-        //edges.insert(make_pair(x, y));
-        insertEdge(make_pair(x, y));
+        edges.insert(make_pair(x, y));
         inDegreeSimple[x].erase(y);
         outDegreeSimple[y].erase(x);
         degreeDouble[x].insert(y);
@@ -244,12 +177,7 @@ void clearSets() {
     oneDegreeNodes.clear();
     availableNodes.clear();
     candidatesNodes.clear();
-    //edges.clear();
-    stEdges.clear();
-    lEdges.clear();
-    hEdges.clear();
-    stackSizeEdges = 0;
-    counterEdges = 0;
+    edges.clear();
     inDegreeSimple.clear();
     degreeDouble.clear();
     outDegreeSimple.clear();
@@ -268,8 +196,7 @@ void eraseNode(int node) {
         int x = *inDegreeSimple[node].begin();
         inDegreeSimple[node].erase(inDegreeSimple[node].begin());
         outDegreeSimple[x].erase(node);
-        //edges.erase(make_pair(x, node));
-        eraseEdge(make_pair(x, node));
+        edges.erase(make_pair(x, node));
         if (node != x && !checkNodeCanBeReduced(x)) {
             if (lastFitness[x] != -1) {
                 availableNodes.erase(make_pair(lastFitness[x], x));
@@ -282,8 +209,7 @@ void eraseNode(int node) {
         int x = *degreeDouble[node].begin();
         degreeDouble[node].erase(degreeDouble[node].begin());
         degreeDouble[x].erase(node);
-        //edges.erase(make_pair(x, node));
-        eraseEdge(make_pair(x, node));
+        edges.erase(make_pair(x, node));
         if (node != x && !checkNodeCanBeReduced(x)) {
             if (lastFitness[x] != -1) {
                 availableNodes.erase(make_pair(lastFitness[x], x));
@@ -296,8 +222,7 @@ void eraseNode(int node) {
         int x = *outDegreeSimple[node].begin();
         outDegreeSimple[node].erase(outDegreeSimple[node].begin());
         inDegreeSimple[x].erase(node);
-        //edges.erase(make_pair(node, x));
-        eraseEdge(make_pair(node, x));
+        edges.erase(make_pair(node, x));
         if (node != x && !checkNodeCanBeReduced(x)) {
             if (lastFitness[x] != -1) {
                 availableNodes.erase(make_pair(lastFitness[x], x));
@@ -312,7 +237,7 @@ void bypassNode(int node) {
     if (!availableNode[node]) {
         return;
     }
-    if (/*edges.count(make_pair(node, node))*/ findEdge(make_pair(node, node))) {
+    if (edges.count(make_pair(node, node))) {
         selfLoopNodes.emplace_back(node);
         return;
     }
@@ -357,8 +282,7 @@ void bypassNode(int node) {
         for (auto it2 : outNodes) {
             checkTime();
             addEdge(it1, it2);
-            //edges.insert(make_pair(it1, it2));
-            insertEdge(make_pair(it1, it2));
+            edges.insert(make_pair(it1, it2));
             if (it1 == it2) {
                 selfLoopNodes.emplace_back(it1);
             }
@@ -392,8 +316,7 @@ void runTarjan(int node) {
         }
 
         if (stackTarjan.back().first.second != outDegreeSimple[stackTarjan.back().first.first].end() &&
-            /*edges.count(make_pair(*stackTarjan.back().first.second, stackTarjan.back().first.first))*/
-            findEdge(make_pair(*stackTarjan.back().first.second, stackTarjan.back().first.first))) {
+            edges.count(make_pair(*stackTarjan.back().first.second, stackTarjan.back().first.first))) {
             stackTarjan.back().first.second++;
             continue;
         }
@@ -455,8 +378,7 @@ bool checkTarjan(int node) {
             sccStack.emplace_back(stackTarjan.back().first.first);
         }
         if (stackTarjan.back().first.second != outDegreeSimple[stackTarjan.back().first.first].end() &&
-            /*edges.count(make_pair(*stackTarjan.back().first.second, stackTarjan.back().first.first))*/
-            findEdge(make_pair(*stackTarjan.back().first.second, stackTarjan.back().first.first))) {
+            edges.count(make_pair(*stackTarjan.back().first.second, stackTarjan.back().first.first))) {
             stackTarjan.back().first.second++;
             continue;
         }
@@ -665,55 +587,23 @@ bool reduceSCC() {
             runTarjan(it);
         }
     }
-    for (int i = 0; i < MOD; ++i) {
-        int j = hEdges[i];
-        while (j != -1) {
-            checkTime();
-            auto it = lEdges[j].v;
-            if (findEdge(make_pair(it.second, it.first)) /*edges.count(make_pair(it.second, it.first))*/) continue;
-            if (whichSCC[it.first] != whichSCC[it.second]) {
-                toBeErasedSCC.emplace_back(it);
-            }
-            j = lEdges[j].n;
-        }
-    }
-    /*
-    int i = hEdges[(y.first * 97 + y.second) - ((y.first * 97 + y.second) / MOD) * MOD];
-    while (i != -1 && lEdges[i].v != y) {
-        i = lEdges[i].n;
-    }
-    */
-    /*
     for (auto it : edges) {
         checkTime();
-        if (findEdge(make_pair(it.second, it.first)) edges.count(make_pair(it.second, it.first))) continue;
-    if (whichSCC[it.first] != whichSCC[it.second]) {
-        toBeErasedSCC.emplace_back(it);
+        if (edges.count(make_pair(it.second, it.first))) continue;
+        if (whichSCC[it.first] != whichSCC[it.second]) {
+            toBeErasedSCC.emplace_back(it);
+        }
     }
-}
-
-*/
-    for (
-        auto it
-            : toBeErasedSCC) {
+    for (auto it : toBeErasedSCC) {
         checkTime();
-
-        eraseEdge(it
-                          .first, it.second, 3);
+        eraseEdge(it.first, it.second, 3);
     }
     bool ret = !toBeErasedSCC.empty();
-    toBeErasedSCC.
-
-            clear();
-
+    toBeErasedSCC.clear();
     sccIndex = 0;
     sccCounter = 0;
-    sccStack.
-
-            clear();
-
-    return
-            ret;
+    sccStack.clear();
+    return ret;
 }
 
 void doBasicReductions() {
@@ -727,7 +617,7 @@ void doBasicReductions() {
             checkTime();
             int node = selfLoopNodes.back();
             selfLoopNodes.pop_back();
-            if (/*!edges.count(make_pair(node, node))*/ !findEdge(make_pair(node, node))) {
+            if (!edges.count(make_pair(node, node))) {
                 continue;
             }
             eraseNode(node);
@@ -774,7 +664,7 @@ void loop() {
 void findDFVS() {
     checkTime();
     doBasicReductions();
-    int edgesCount = /*edges.size()*/ counterEdges;
+    int edgesCount = edges.size();
     currentErased = 0;
     loop();
     while (!availableNodes.empty()) {
@@ -787,17 +677,17 @@ void findDFVS() {
         ++currentErased;
         eraseNode(topNode.first);
         doBasicReductions();
-        if ((/*edges.size()*/ counterEdges * 20 < edgesCount * 19 && firstTime) ||
-            (/*edges.size()*/ counterEdges * 4 < edgesCount * 3 && !firstTime)) {
-            edgesCount = /*edges.size()*/ counterEdges;
+        if ((edges.size() * 20 < edgesCount * 19 && firstTime) ||
+            (edges.size() * 4 < edgesCount * 3 && !firstTime)) {
+            edgesCount = edges.size();
             loop();
         }
         feedbackVertexSet.insert(topNode.first);
     }
     lastFeedbackVertexSet = feedbackVertexSet;
     if (bestFeedbackVertexSet.size() > feedbackVertexSet.size()) {
+        changed = (int) bestFeedbackVertexSet.size() - (int) feedbackVertexSet.size();
         bestFeedbackVertexSet = feedbackVertexSet;
-        changed = 1;
     }
 }
 
@@ -809,7 +699,7 @@ void readData() {
     path_input += to_string(testNo);
     ifstream in(path_input);
     int t;
-    while (getline(in, s)) {
+    while (getline(cin, s)) {
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -828,7 +718,7 @@ void readData() {
     }
     initializeSets();
     for (int j = 1; j <= n; ++j) {
-        getline(in, s);
+        getline(cin, s);
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -865,8 +755,7 @@ void createInitialDFVS() {
     degreeDouble = degreeReducedDouble;
     outDegreeSimple = outDegreeReducedSimple;
     for (auto it : edgesReduced) {
-        //edges.insert(it);
-        insertEdge(it);
+        edges.insert(it);
     }
     availableNode = availableNodeReduced;
     for (auto x : candidatesNodes) {
@@ -879,7 +768,7 @@ void createInitialDFVS() {
             lastFitness[x] = getFitness(x);
         }
     }
-    cout << candidatesNodes.size() << '\n';
+    //cout << candidatesNodes.size() << '\n';
     findDFVS();
     clearSets();
     initializeSets();
@@ -908,28 +797,11 @@ void improveFeedbackVertexSet() {
         if (!node1 || !node2) {
             continue;
         }
-        //edges.insert(it);
-        insertEdge(it);
+        edges.insert(it);
     }
-    for (int i = 0; i < MOD; ++i) {
-        int j = hEdges[i];
-        while (j != -1) {
-            checkTime();
-            auto it = lEdges[j].v;
-            if (/*edges.count(make_pair(it.second, it.first))*/ findEdge(make_pair(it.second, it.first))) {
-                degreeDouble[it.first].insert(it.second);
-                degreeDouble[it.second].insert(it.first);
-            } else {
-                outDegreeSimple[it.first].insert(it.second);
-                inDegreeSimple[it.second].insert(it.first);
-            }
-            j = lEdges[j].n;
-        }
-    }
-    /*
     for (auto it : edges) {
         checkTime();
-        if (edges.count(make_pair(it.second, it.first)) findEdge(make_pair(it.second, it.first))) {
+        if (edges.count(make_pair(it.second, it.first))) {
             degreeDouble[it.first].insert(it.second);
             degreeDouble[it.second].insert(it.first);
         } else {
@@ -937,7 +809,7 @@ void improveFeedbackVertexSet() {
             inDegreeSimple[it.second].insert(it.first);
         }
     }
-    */
+
     localDFVS.reserve(lastFeedbackVertexSet.size());
     for (auto it : lastFeedbackVertexSet) {
         checkTime();
@@ -947,8 +819,7 @@ void improveFeedbackVertexSet() {
         return 1LL * inDegreeReducedSimple[i].size() * outDegreeReducedSimple[i].size() >
                1LL * inDegreeReducedSimple[j].size() * outDegreeReducedSimple[j].size();
     });
-    int size = localDFVS.size();
-    while (localDFVS.size() /*> size / 3*/) {
+    while (!localDFVS.empty()) {
         checkTime();
         int node = localDFVS.back();
         localDFVS.pop_back();
@@ -968,8 +839,7 @@ void improveFeedbackVertexSet() {
             if (candidatesNodes.count(it)) {
                 inDegreeSimple[node].insert(it);
                 outDegreeSimple[it].insert(node);
-                //edges.insert(make_pair(it, node));
-                insertEdge(make_pair(it, node));
+                edges.insert(make_pair(it, node));
             }
         }
         for (auto it : outDegreeReducedSimple[node]) {
@@ -977,8 +847,7 @@ void improveFeedbackVertexSet() {
             if (candidatesNodes.count(it)) {
                 outDegreeSimple[node].insert(it);
                 inDegreeSimple[it].insert(node);
-                //edges.insert(make_pair(node, it));
-                insertEdge(make_pair(node, it));
+                edges.insert(make_pair(node, it));
             }
         }
         candidatesNodes.insert(node);
@@ -990,8 +859,7 @@ void improveFeedbackVertexSet() {
                 checkTime();
                 if (it != node) {
                     outDegreeSimple[it].erase(node);
-                    //edges.erase(make_pair(it, node));
-                    eraseEdge(make_pair(it, node));
+                    edges.erase(make_pair(it, node));
                 }
             }
             inDegreeSimple[node].clear();
@@ -999,13 +867,11 @@ void improveFeedbackVertexSet() {
                 checkTime();
                 if (it != node) {
                     inDegreeSimple[it].erase(node);
-                    //edges.erase(make_pair(node, it));
-                    eraseEdge(make_pair(node, it));
+                    edges.erase(make_pair(node, it));
                 }
             }
             outDegreeSimple[node].clear();
-            //edges.erase(make_pair(node, node));
-            eraseEdge(make_pair(node, node));
+            edges.erase(make_pair(node, node));
             candidatesNodes.erase(node);
             availableNode[node] = false;
         }
@@ -1022,8 +888,7 @@ void improveFeedbackVertexSet() {
 
 void doLocalSearch() {
     checkTime();
-    cout << "++" << getElapsed() << '\n';
-    fitnessType = 1;
+    //cout << "++" << getElapsed() << '\n';
     checkTime();
     for (auto node : bestFeedbackVertexSet) {
         checkTime();
@@ -1031,11 +896,13 @@ void doLocalSearch() {
     }
     checkTime();
     unsigned seed = rand();
+    fitnessType = (int) seed % 2 + 1;
     shuffle(local.begin(), local.end(), default_random_engine(seed));
-    int toBeErasedCounter = (int) local.size() * 4 / 5;
-    if (bestFeedbackVertexSet.size() < 1000) {
+    int toBeErasedCounter = (int) local.size() * 3 / 4;
+    if (bestFeedbackVertexSet.size() < 1000 && seed % 2 == 1) {
         toBeErasedCounter = (int) local.size() * 2 / 3;
     }
+
     while (toBeErasedCounter--) {
         checkTime();
         int node = local.back();
@@ -1044,7 +911,7 @@ void doLocalSearch() {
         feedbackVertexSet.insert(node);
     }
     local.clear();
-    cout << getElapsed() << '\n';
+    //cout << getElapsed() << '\n';
     availableNode = availableNodeReduced;
     for (auto it : candidatesNodesReduced) {
         checkTime();
@@ -1066,28 +933,11 @@ void doLocalSearch() {
         if (!node1 || !node2) {
             continue;
         }
-        //edges.insert(it);
-        insertEdge(it);
+        edges.insert(it);
     }
-    for (int i = 0; i < MOD; ++i) {
-        int j = hEdges[i];
-        while (j != -1) {
-            checkTime();
-            auto it = lEdges[j].v;
-            if (/*edges.count(make_pair(it.second, it.first))*/ findEdge(make_pair(it.second, it.first))) {
-                degreeDouble[it.first].insert(it.second);
-                degreeDouble[it.second].insert(it.first);
-            } else {
-                outDegreeSimple[it.first].insert(it.second);
-                inDegreeSimple[it.second].insert(it.first);
-            }
-            j = lEdges[j].n;
-        }
-    }
-    /*
     for (auto it : edges) {
         checkTime();
-        if (edges.count(make_pair(it.second, it.first)) findEdge(make_pair(it.second, it.first))) {
+        if (edges.count(make_pair(it.second, it.first))) {
             degreeDouble[it.first].insert(it.second);
             degreeDouble[it.second].insert(it.first);
         } else {
@@ -1095,7 +945,6 @@ void doLocalSearch() {
             inDegreeSimple[it.second].insert(it.first);
         }
     }
-    */
     loop();
     for (auto x : candidatesNodes) {
         checkTime();
@@ -1109,7 +958,7 @@ void doLocalSearch() {
     }
     local.clear();
     localSet.clear();
-    cout << "--" << getElapsed() << '\n';
+    //cout << "--" << getElapsed() << '\n';
     findDFVS();
     clearSets();
     initializeSets();
@@ -1127,22 +976,21 @@ void checkTime() {
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
     double sec = elapsed.count() * 1e-9;
     if (sec >= SECONDS - 30) {
-        string path_output =
-                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
-        ofstream out(path_output);
+        //string path_output =R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
+        //ofstream out(path_output);
         ios_base::sync_with_stdio(false);
         cout.tie();
-        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
-        out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         for (auto it: feedbackVertexSetReduced) {
             output += to_string(it) + '\n';
         }
         for (auto node : bestFeedbackVertexSet) {
             output += to_string(node) + '\n';
         }
-        out << output;
-        out.close();
-        output.clear();
+        cout << output;
+        //out.close();
+        //output.clear();
         exit(0);
     }
 }
@@ -1180,19 +1028,8 @@ void solveTestcase() {
     degreeReducedDouble = degreeDouble;
     outDegreeReducedSimple = outDegreeSimple;
     feedbackVertexSetReduced = feedbackVertexSet;
-    /*
     for (auto it : edges) {
         edgesReduced.emplace_back(it);
-    }
-    */
-    for (int i = 0; i < MOD; ++i) {
-        int j = hEdges[i];
-        while (j != -1) {
-            checkTime();
-            auto it = lEdges[j].v;
-            edgesReduced.emplace_back(it);
-            j = lEdges[j].n;
-        }
     }
     availableNodeReduced = availableNode;
     feedbackVertexSet.clear();
@@ -1201,13 +1038,13 @@ void solveTestcase() {
         createInitialDFVS();
         clearSets();
         initializeSets();
-        cout << "??\n";
-        cout << getElapsed() << '\n';
+        //cout << "??\n";
+        //cout << getElapsed() << '\n';
         improveFeedbackVertexSet();
-        cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
     firstTime = 1;
-    cout << "()" << getElapsed() << '\n';
+    //cout << "()" << getElapsed() << '\n';
     clearSets();
     initializeSets();
     int notChanged = 0;
@@ -1216,8 +1053,9 @@ void solveTestcase() {
         changed = 0;
         doLocalSearch();
         //if (notChanged < 10) {
-        if (!changed) {
-            cout << "--\n";
+        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        if (changed < 10) {
+            //cout << "--\n";
             improveFeedbackVertexSet();
             ++notChanged;
         } else {
@@ -1225,7 +1063,7 @@ void solveTestcase() {
         }
         // }
 
-        cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
     string path_output =
             R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
