@@ -2,7 +2,7 @@
 #include <chrono>
 
 using namespace std;
-const int SECONDS = 600;
+const int SECONDS = 300;
 
 struct pair_hash {
     std::size_t operator()(const std::pair<int, int> &v) const {
@@ -242,8 +242,10 @@ bool reduceDICLIQUE() {
 }
 
 signed main() {
-    for (testNo = 133; testNo <= 133; testNo += 2) {
-        cout << (testNo + 1) / 2 << '\n';
+    ios_base::sync_with_stdio(false);
+    cin.tie();
+    for (testNo = 189; testNo <= 189; testNo += 2) {
+        //cout << (testNo + 1) / 2 << '\n';
         solveTestcase();
     }
     return 0;
@@ -810,7 +812,7 @@ void doBasicReductions() {
 void loop() {
     bool change = true;
     char count = 0;
-    while (change && count++ < (!firstTime ? 20 : 100)) {
+    while (change && count++ < (!firstTime ? 3 : 100)) {
         checkTime();
         change = false;
         change |= reduceSCC();
@@ -855,6 +857,8 @@ void findDFVS() {
     if (bestFeedbackVertexSet.size() > feedbackVertexSet.size()) {
         changed = (int) bestFeedbackVertexSet.size() - (int) feedbackVertexSet.size();
         bestFeedbackVertexSet = feedbackVertexSet;
+    } else {
+        changed = 0;
     }
 }
 
@@ -866,7 +870,7 @@ void readData() {
     path_input += to_string(testNo);
     ifstream in(path_input);
     int t;
-    while (getline(in, s)) {
+    while (getline(cin, s)) {
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -885,7 +889,7 @@ void readData() {
     }
     initializeSets();
     for (int j = 1; j <= n; ++j) {
-        getline(in, s);
+        getline(cin, s);
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -936,7 +940,7 @@ void createInitialDFVS() {
             lastFitness[x] = getFitness(x);
         }
     }
-    cout << "-+" << candidatesNodes.size() << '\n';
+    //cout << "-+" << candidatesNodes.size() << '\n';
     findDFVS();
     clearSets();
     initializeSets();
@@ -1056,7 +1060,7 @@ void improveFeedbackVertexSet() {
         bestFeedbackVertexSet = lastFeedbackVertexSet;
         improved = 0;
     } else {
-        cout << "*\n";
+        //cout << "*\n";
         ++improved;
     }
     clearSets();
@@ -1065,7 +1069,7 @@ void improveFeedbackVertexSet() {
 
 void doLocalSearch() {
     checkTime();
-    cout << "++" << getElapsed() << '\n';
+    //cout << "++" << getElapsed() << '\n';
     checkTime();
     for (auto node : bestFeedbackVertexSet) {
         checkTime();
@@ -1073,12 +1077,12 @@ void doLocalSearch() {
     }
     checkTime();
     unsigned seed = rand();
-    cout << "()()" << edgesReduced.size() << '\n';
-    cout << "()()" << bestFeedbackVertexSet.size() << '\n';
+    //cout << "()()" << edgesReduced.size() << '\n';
+    //cout << "()()" << bestFeedbackVertexSet.size() << '\n';
     fitnessType = seed % 2 + 1;
     shuffle(local.begin(), local.end(), default_random_engine(seed));
     int toBeErasedCounter = (int) local.size() * ratio2[ratioIndex] / (ratio2[ratioIndex] + 1);
-    cout << ratioIndex << '\n';
+    //cout << ratioIndex << '\n';
     if (bestFeedbackVertexSet.size() < 1000 && seed % 2 == 1) {
         toBeErasedCounter = (int) local.size() * 2 / 3;
     }
@@ -1091,7 +1095,7 @@ void doLocalSearch() {
         feedbackVertexSet.insert(node);
     }
     local.clear();
-    cout << getElapsed() << '\n';
+    //cout << getElapsed() << '\n';
     availableNode = availableNodeReduced;
     for (auto it : candidatesNodesReduced) {
         checkTime();
@@ -1138,7 +1142,7 @@ void doLocalSearch() {
     }
     local.clear();
     localSet.clear();
-    cout << "--" << getElapsed() << '\n';
+    //cout << "--" << getElapsed() << '\n';
     findDFVS();
     clearSets();
     initializeSets();
@@ -1156,21 +1160,20 @@ void checkTime() {
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
     double sec = elapsed.count() * 1e-9;
     if (sec >= SECONDS - 30) {
-        string path_output =R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) +".out";
-        ofstream out(path_output);
-        ios_base::sync_with_stdio(false);
+        //string path_output =R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
+        //ofstream out(path_output);
         cout.tie();
-        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
-        out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         for (auto it: feedbackVertexSetReduced) {
             output += to_string(it) + '\n';
         }
         for (auto node : bestFeedbackVertexSet) {
             output += to_string(node) + '\n';
         }
-        out << output;
-        out.close();
-        output.clear();
+        cout << output;
+        //out.close();
+        //output.clear();
         exit(0);
     }
 }
@@ -1217,37 +1220,39 @@ void solveTestcase() {
         createInitialDFVS();
         clearSets();
         initializeSets();
-        cout << "??\n";
-        cout << getElapsed() << '\n';
+        //cout << "??\n";
+        //cout << getElapsed() << '\n';
         improveFeedbackVertexSet();
-        cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
     firstTime = 1;
-    cout << "()" << getElapsed() << '\n';
+    //cout << "()" << getElapsed() << '\n';
     clearSets();
     initializeSets();
     for (;;) {
         auto currentTime = getElapsed();
         checkTime();
-        changed = 0;
         doLocalSearch();
-        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
-        cout << "--\n";
+        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << "--\n";
         auto currTime = getElapsed();
-        improveFeedbackVertexSet();
-        cout << '(' << currTime - currentTime << '\n';
+        if (changed < 5) {
+            //cout << "!!\n";
+            improveFeedbackVertexSet();
+        }
+        //cout << '(' << currTime - currentTime << '\n';
         if (improved > 1 || currTime - currentTime > 3.) {
-            cout << "boss\n";
-            improved = 0;
+            //cout << "boss\n";
+            //improved = 0;
             ratioIndex = min(ratioIndex + 1, (int) ratio2.size() - 1);
         }
-        cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
     string path_output =
             R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
     ofstream out(path_output);
     out << feedbackVertexSetReduced.size() + bestFeedbackVertexSet.size() << '\n';
-    cout << feedbackVertexSetReduced.size() + bestFeedbackVertexSet.size() << '\n';
+    //cout << feedbackVertexSetReduced.size() + bestFeedbackVertexSet.size() << '\n';
     for (auto it: feedbackVertexSetReduced) {
         output += to_string(it) + '\n';
     }
