@@ -2,7 +2,7 @@
 #include <chrono>
 
 using namespace std;
-const int SECONDS = 300;
+const int SECONDS = 600;
 
 struct pair_hash {
     std::size_t operator()(const std::pair<int, int> &v) const {
@@ -23,7 +23,7 @@ vector<bool> availableNode, inStack, availableNodeReduced, visitedCORE;
 vector<int> inNodes, outNodes, localDFVS, local, selfLoopNodes, zeroDegreeNodes, oneDegreeNodes, lowLevel, sccStack, currLevel, whichSCC, candidatesSorted;
 unordered_set<int> candidatesNodesReduced, localSet, cliqueCORE, candidatesNodes, feedbackVertexSet, bestFeedbackVertexSet, lastFeedbackVertexSet, feedbackVertexSetReduced;
 vector<long long> lastFitness;
-vector<int> ratio2 = {3, 4, 5, 6, 7, 8, 9, 10};
+vector<int> ratio2 = {2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 auto cmp = [](pair<long long, int> a, pair<long long, int> b) {
     return a.first > b.first || (a.first == b.first && a.second > b.second);
@@ -244,7 +244,7 @@ bool reduceDICLIQUE() {
 signed main() {
     ios_base::sync_with_stdio(false);
     cin.tie();
-    for (testNo = 189; testNo <= 189; testNo += 2) {
+    for (testNo = 133; testNo <= 133; testNo += 2) {
         //cout << (testNo + 1) / 2 << '\n';
         solveTestcase();
     }
@@ -1058,10 +1058,6 @@ void improveFeedbackVertexSet() {
     initializeSets();
     if (lastFeedbackVertexSet.size() < bestFeedbackVertexSet.size()) {
         bestFeedbackVertexSet = lastFeedbackVertexSet;
-        improved = 0;
-    } else {
-        //cout << "*\n";
-        ++improved;
     }
     clearSets();
     initializeSets();
@@ -1083,9 +1079,10 @@ void doLocalSearch() {
     shuffle(local.begin(), local.end(), default_random_engine(seed));
     int toBeErasedCounter = (int) local.size() * ratio2[ratioIndex] / (ratio2[ratioIndex] + 1);
     //cout << ratioIndex << '\n';
-    if (bestFeedbackVertexSet.size() < 1000 && seed % 2 == 1) {
-        toBeErasedCounter = (int) local.size() * 2 / 3;
-    }
+    //if (/*bestFeedbackVertexSet.size() < 1000 &&*/ seed % 2 == 1) {
+    //  cout << "&&\n";
+    //   toBeErasedCounter = (int) local.size() * 2 / 3;
+    //}
 
     while (toBeErasedCounter--) {
         checkTime();
@@ -1160,8 +1157,9 @@ void checkTime() {
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
     double sec = elapsed.count() * 1e-9;
     if (sec >= SECONDS - 30) {
-        //string path_output =R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
-        //ofstream out(path_output);
+        string path_output =
+                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
+        ofstream out(path_output);
         cout.tie();
         //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         //out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
@@ -1236,14 +1234,15 @@ void solveTestcase() {
         //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         //cout << "--\n";
         auto currTime = getElapsed();
+        improved = 0;
         if (changed < 5) {
             //cout << "!!\n";
+            improved = 1;
             improveFeedbackVertexSet();
         }
         //cout << '(' << currTime - currentTime << '\n';
-        if (improved > 1 || currTime - currentTime > 3.) {
+        if (/*(improved == 1 && currTime - currentTime > 4.) ||*/ currTime - currentTime > 8.) {
             //cout << "boss\n";
-            //improved = 0;
             ratioIndex = min(ratioIndex + 1, (int) ratio2.size() - 1);
         }
         //cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
