@@ -2,7 +2,14 @@
 #include <chrono>
 
 using namespace std;
-const int SECONDS = 600;
+const int SECONDS = 300;
+
+static unsigned int randSeed = 1;
+
+int customRand() {
+    randSeed = randSeed * 1103515245 + 12345;
+    return (1LL * randSeed / 65536) % 32768;
+}
 
 struct pair_hash {
     std::size_t operator()(const std::pair<int, int> &v) const {
@@ -11,7 +18,7 @@ struct pair_hash {
 };
 
 std::chrono::time_point<std::chrono::high_resolution_clock> begin_;
-int n, m, fitnessType, sccIndex, sccCounter, testNo, currentErased, firstTime, changed, ratioIndex, improved;
+int n, m, fitnessType, sccIndex, sccCounter, testNo, currentErased, firstTime, changed, ratioIndex;
 string output, s;
 vector<pair<pair<int, int>, int >> toBeErasedBypass;
 vector<pair<pair<int, unordered_set<int>::iterator>, int> > stackTarjan;
@@ -154,16 +161,20 @@ bool reduceDICLIQUE3() {
             continue;
         }
         for (auto it2 : inDegreeSimple[it]) {
+            checkTime();
             candidatesSortedSet.insert(it2);
         }
         for (auto it2 : outDegreeSimple[it]) {
+            checkTime();
             candidatesSortedSet.insert(it2);
         }
         bool ok = true;
         for (auto &i : cl3) {
+            checkTime();
             if (candidatesSortedSet.empty()) {
                 candidatesSortedSet.clear();
                 for (auto &it2 : cl3) {
+                    checkTime();
                     it2.clear();
                 }
                 ok = false;
@@ -173,12 +184,14 @@ bool reduceDICLIQUE3() {
             candidatesSortedSet.erase(node);
             i.insert(node);
             for (auto it2 : candidatesSortedSet) {
+                checkTime();
                 if (edges.count(make_pair(node, it2)) && edges.count(make_pair(it2, node))) {
                     i.insert(it2);
                     toBeErasedSet.emplace_back(it2);
                 }
             }
             for (auto it2 : toBeErasedSet) {
+                checkTime();
                 candidatesSortedSet.erase(it2);
             }
             toBeErasedSet.clear();
@@ -189,14 +202,18 @@ bool reduceDICLIQUE3() {
         if (!candidatesSortedSet.empty()) {
             candidatesSortedSet.clear();
             for (auto &it2 : cl3) {
+                checkTime();
                 it2.clear();
             }
             continue;
         }
         bool clOK[3] = {true, true, true}, okIsh = true;
         for (int i = 0; i < 3 && okIsh; ++i) {
+            checkTime();
             for (auto it3 : cl3[i]) {
+                checkTime();
                 for (auto it4 : cl3[i]) {
+                    checkTime();
                     if (it3 == it4) {
                         continue;
                     }
@@ -212,6 +229,7 @@ bool reduceDICLIQUE3() {
             if (!clOK[i]) {
                 okIsh = false;
                 for (auto &it2 : cl3) {
+                    checkTime();
                     it2.clear();
                 }
                 candidatesSortedSet.clear();
@@ -226,6 +244,7 @@ bool reduceDICLIQUE3() {
         //cout << "*\n";
         // cout << "ok?\n";
         for (auto &it2 : cl3) {
+            checkTime();
             it2.clear();
         }
         candidatesSortedSet.clear();
@@ -238,6 +257,7 @@ bool reduceDICLIQUE2() {
     bool ret = false;
     ll = candidatesNodes;
     for (auto it : ll) {
+        checkTime();
         if (!availableNode[it]) {
             continue;
         }
@@ -245,19 +265,24 @@ bool reduceDICLIQUE2() {
             continue;
         }
         for (auto it2 : inDegreeSimple[it]) {
+            checkTime();
             candidatesSortedSet.insert(it2);
         }
         for (auto it2 : outDegreeSimple[it]) {
+            checkTime();
             candidatesSortedSet.insert(it2);
         }
         for (auto it2 : degreeDouble[it]) {
+            checkTime();
             candidatesSortedSet.insert(it2);
         }
         bool ok = true;
         for (auto &i : cl2) {
+            checkTime();
             if (candidatesSortedSet.empty()) {
                 candidatesSortedSet.clear();
                 for (auto &it2 : cl2) {
+                    checkTime();
                     it2.clear();
                 }
                 ok = false;
@@ -267,12 +292,14 @@ bool reduceDICLIQUE2() {
             candidatesSortedSet.erase(node);
             i.insert(node);
             for (auto it2 : candidatesSortedSet) {
+                checkTime();
                 if (edges.count(make_pair(node, it2)) && edges.count(make_pair(it2, node))) {
                     i.insert(it2);
                     toBeErasedSet.emplace_back(it2);
                 }
             }
             for (auto it2 : toBeErasedSet) {
+                checkTime();
                 candidatesSortedSet.erase(it2);
             }
             toBeErasedSet.clear();
@@ -283,13 +310,16 @@ bool reduceDICLIQUE2() {
         if (!candidatesSortedSet.empty()) {
             candidatesSortedSet.clear();
             for (auto &it2 : cl2) {
+                checkTime();
                 it2.clear();
             }
             continue;
         }
         bool cl1OK = true, cl2OK = true;
         for (auto it3 : cl2[0]) {
+            checkTime();
             for (auto it4 : cl2[0]) {
+                checkTime();
                 if (it3 == it4) {
                     continue;
                 }
@@ -304,13 +334,16 @@ bool reduceDICLIQUE2() {
         }
         if (!cl1OK) {
             for (auto &it2 : cl2) {
+                checkTime();
                 it2.clear();
             }
             candidatesSortedSet.clear();
             continue;
         }
         for (auto it3 : cl2[1]) {
+            checkTime();
             for (auto it4 : cl2[1]) {
+                checkTime();
                 if (it3 == it4) {
                     continue;
                 }
@@ -325,6 +358,7 @@ bool reduceDICLIQUE2() {
         }
         if (!cl2OK) {
             for (auto &it2 : cl2) {
+                checkTime();
                 it2.clear();
             }
             candidatesSortedSet.clear();
@@ -332,6 +366,7 @@ bool reduceDICLIQUE2() {
         }
         bool sw0 = false, sw1 = false;
         for (auto it2 : degreeDouble[it]) {
+            checkTime();
             if (cl2[0].count(it2)) {
                 sw0 = true;
             }
@@ -341,6 +376,7 @@ bool reduceDICLIQUE2() {
         }
         if (sw0 && sw1) {
             for (auto &it2 : cl2) {
+                checkTime();
                 it2.clear();
             }
             candidatesSortedSet.clear();
@@ -351,6 +387,7 @@ bool reduceDICLIQUE2() {
         ret = true;
         //cout << "*\n";
         for (auto &it2 : cl2) {
+            checkTime();
             it2.clear();
         }
         candidatesSortedSet.clear();
@@ -361,6 +398,7 @@ bool reduceDICLIQUE2() {
 bool reduceDICLIQUE1() {
     bool ret = false;
     for (auto it : candidatesNodes) {
+        checkTime();
         candidatesSorted.emplace_back(it);
     }
     sort(candidatesSorted.begin(), candidatesSorted.end(), [](const int i, const int j) {
@@ -368,6 +406,7 @@ bool reduceDICLIQUE1() {
                degreeDouble[j].size() + min(inDegreeSimple[j].size(), outDegreeSimple[j].size());
     });
     for (auto it : candidatesSorted) {
+        checkTime();
         if (!availableNode[it]) {
             continue;
         }
@@ -376,7 +415,9 @@ bool reduceDICLIQUE1() {
         }
         bool doubleOK = true;
         for (auto it1 : degreeDouble[it]) {
+            checkTime();
             for (auto it2 : degreeDouble[it]) {
+                checkTime();
                 if (it1 == it2) {
                     continue;
                 }
@@ -395,7 +436,9 @@ bool reduceDICLIQUE1() {
         bool inOK = false;
         inOK = true;
         for (auto it1 : inDegreeSimple[it]) {
+            checkTime();
             for (auto it2 : inDegreeSimple[it]) {
+                checkTime();
                 if (!edges.count(make_pair(it1, it2)) || !edges.count(make_pair(it2, it1))) {
                     inOK = false;
                     break;
@@ -408,7 +451,9 @@ bool reduceDICLIQUE1() {
 
         if (inOK) {
             for (auto it1 : inDegreeSimple[it]) {
+                checkTime();
                 for (auto it2 : degreeDouble[it]) {
+                    checkTime();
                     if (!edges.count(make_pair(it1, it2)) || !edges.count(make_pair(it2, it1))) {
                         inOK = false;
                         break;
@@ -428,7 +473,9 @@ bool reduceDICLIQUE1() {
         bool outOK = false;
         outOK = true;
         for (auto it1 : outDegreeSimple[it]) {
+            checkTime();
             for (auto it2 : outDegreeSimple[it]) {
+                checkTime();
                 if (!edges.count(make_pair(it1, it2)) || !edges.count(make_pair(it2, it1))) {
                     outOK = false;
                     break;
@@ -440,7 +487,9 @@ bool reduceDICLIQUE1() {
         }
         if (outOK) {
             for (auto it1 : outDegreeSimple[it]) {
+                checkTime();
                 for (auto it2 : degreeDouble[it]) {
+                    checkTime();
                     if (!edges.count(make_pair(it1, it2)) || !edges.count(make_pair(it2, it1))) {
                         outOK = false;
                         break;
@@ -462,10 +511,9 @@ bool reduceDICLIQUE1() {
 }
 
 signed main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie();
-    for (testNo = 129; testNo <= 129; testNo += 2) {
-        // cout << (testNo + 1) / 2 << '\n';
+    //cin.tie();
+    for (testNo = 7; testNo <= 7; testNo += 2) {
+        //cout << (testNo + 1) / 2 << '\n';
         solveTestcase();
     }
     return 0;
@@ -1090,7 +1138,7 @@ void findDFVS() {
         ++currentErased;
         eraseNode(topNode.first);
         doBasicReductions();
-        if ((edges.size() * 4 < edgesCount * 3 && firstTime) ||
+        if ((edges.size() * 10 < edgesCount * 9 && firstTime) ||
             (edges.size() * 4 < edgesCount * 3 && !firstTime)) {
             loop();
             edgesCount = edges.size();
@@ -1104,6 +1152,7 @@ void findDFVS() {
     } else {
         changed = 0;
     }
+
 }
 
 void readData() {
@@ -1238,7 +1287,7 @@ void improveFeedbackVertexSet() {
     });
     while (!localDFVS.empty()) {
         auto currTime = getElapsed();
-        if (currTime - currentTime > 100. && firstTime) {
+        if (currTime - currentTime > 5. && firstTime) {
             break;
         }
         checkTime();
@@ -1316,18 +1365,22 @@ void doLocalSearch() {
         local.emplace_back(node);
     }
     checkTime();
-    unsigned seed = rand();
+    unsigned seed = customRand();
     //cout << "()()" << edgesReduced.size() << '\n';
     //cout << "()()" << bestFeedbackVertexSet.size() << '\n';
-    fitnessType = seed % 2 + 1;
-    shuffle(local.begin(), local.end(), default_random_engine(seed));
+    fitnessType = (int) seed % 2 + 1;
+    if (!local.empty()) {
+        for (int i = 0; i < local.size(); i++) {
+            int j = customRand() % ((int) local.size());
+            swap(local[i], local[j]);
+        }
+    }
     int toBeErasedCounter = (int) local.size() * ratio2[ratioIndex] / (ratio2[ratioIndex] + 1);
     //cout << ratioIndex << '\n';
     //if (/*bestFeedbackVertexSet.size() < 1000 &&*/ seed % 2 == 1) {
     //  cout << "&&\n";
     //   toBeErasedCounter = (int) local.size() * 2 / 3;
     //}
-
     while (toBeErasedCounter--) {
         checkTime();
         int node = local.back();
@@ -1371,6 +1424,7 @@ void doLocalSearch() {
         }
     }
     loop();
+
     for (auto x : candidatesNodes) {
         checkTime();
         if (!checkNodeCanBeReduced(x)) {
@@ -1383,9 +1437,7 @@ void doLocalSearch() {
     }
     local.clear();
     localSet.clear();
-    //cout << "--" << getElapsed() << '\n';
     findDFVS();
-    //cout << "=====" << feedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     clearSets();
     initializeSets();
 }
@@ -1401,9 +1453,12 @@ void checkTime() {
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
     double sec = elapsed.count() * 1e-9;
-    if (sec >= SECONDS - 30) {
-        //string path_output =R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
-        //ofstream out(path_output);
+    if (sec >= SECONDS - 5) {
+        string path_output =
+                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) +
+                ".out";
+        ofstream out(path_output);
+        ios_base::sync_with_stdio(false);
         cout.tie();
         //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         //out << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
@@ -1438,7 +1493,6 @@ long long getFitness(int node) {
 
 void solveTestcase() {
     begin_ = std::chrono::high_resolution_clock::now();
-    srand(0);
     readData();
     for (int i = 1; i <= n; ++i) {
         checkNodeCanBeReduced(i);
@@ -1472,6 +1526,7 @@ void solveTestcase() {
     //cout << "()" << getElapsed() << '\n';
     clearSets();
     initializeSets();
+
     for (;;) {
         auto currentTime = getElapsed();
         checkTime();
@@ -1479,18 +1534,16 @@ void solveTestcase() {
         //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         //cout << "--\n";
         auto currTime = getElapsed();
-        improved = 0;
         if (changed < 5) {
             //cout << "!!\n";
-            improved = 1;
             improveFeedbackVertexSet();
         }
+        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         //cout << '(' << currTime - currentTime << '\n';
         if (/*(improved == 1 && currTime - currentTime > 4.) ||*/ currTime - currentTime > 8.) {
             //cout << "boss\n";
             ratioIndex = min(ratioIndex + 1, (int) ratio2.size() - 1);
         }
-        //cout << "**" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
     string path_output =
             R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) + ".out";
