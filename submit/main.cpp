@@ -2,7 +2,7 @@
 #include <chrono>
 
 using namespace std;
-const int SECONDS = 300;
+const int SECONDS = 600;
 
 static unsigned int randSeed = 1;
 
@@ -630,6 +630,7 @@ void eraseNode(int node) {
         inDegreeSimple[node].erase(inDegreeSimple[node].begin());
         outDegreeSimple[x].erase(node);
         edges.erase(make_pair(x, node));
+        edges.erase(make_pair(node, x));
         if (node != x && !checkNodeCanBeReduced(x)) {
             if (lastFitness[x] != -1) {
                 availableNodes.erase(make_pair(lastFitness[x], x));
@@ -1081,7 +1082,7 @@ void doBasicReductions() {
 void loopPrim() {
     bool change = true;
     char count = 0;
-    while (change && count++ < (!firstTime ? 10 : 100)) {
+    while (change && count++ < 3) {
         checkTime();
         change = false;
         change |= reduceSCC();
@@ -1090,21 +1091,13 @@ void loopPrim() {
         doBasicReductions();
         change |= reduceCORE();
         doBasicReductions();
-        //if (firstTime) {
-        change |= reduceDICLIQUE2();
-        doBasicReductions();
-        change |= reduceDICLIQUE3();
-        doBasicReductions();
-        change |= reduceDICLIQUE1();
-        doBasicReductions();
-        //}
     }
 }
 
 void loop() {
     bool change = true;
     char count = 0;
-    while (change && count++ < (!firstTime ? 3 : 100)) {
+    while (change && count++ < (!firstTime ? 3 : 10)) {
         checkTime();
         change = false;
         change |= reduceSCC();
@@ -1113,12 +1106,14 @@ void loop() {
         doBasicReductions();
         change |= reduceCORE();
         doBasicReductions();
-        change |= reduceDICLIQUE2();
-        doBasicReductions();
-        change |= reduceDICLIQUE3();
-        doBasicReductions();
-        change |= reduceDICLIQUE1();
-        doBasicReductions();
+        if (firstTime) {
+            change |= reduceDICLIQUE2();
+            doBasicReductions();
+            change |= reduceDICLIQUE3();
+            doBasicReductions();
+            change |= reduceDICLIQUE1();
+            doBasicReductions();
+        }
     }
 }
 
@@ -1138,7 +1133,7 @@ void findDFVS() {
         ++currentErased;
         eraseNode(topNode.first);
         doBasicReductions();
-        if ((edges.size() * 10 < edgesCount * 9 && firstTime) ||
+        if ((edges.size() * 8 < edgesCount * 7 && firstTime) ||
             (edges.size() * 4 < edgesCount * 3 && !firstTime)) {
             loop();
             edgesCount = edges.size();
@@ -1240,6 +1235,7 @@ void createInitialDFVS() {
 }
 
 void improveFeedbackVertexSet() {
+    //cout << "()\n";
     auto currentTime = getElapsed();
     checkTime();
     availableNode = availableNodeReduced;
@@ -1287,9 +1283,11 @@ void improveFeedbackVertexSet() {
     });
     while (!localDFVS.empty()) {
         auto currTime = getElapsed();
-        if (currTime - currentTime > 5. && firstTime) {
-            break;
-        }
+        /*
+         if (currTime - currentTime > 5. && firstTime) {
+             break;
+         }
+        */
         checkTime();
         int node = localDFVS.back();
         localDFVS.pop_back();
@@ -1453,7 +1451,7 @@ void checkTime() {
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
     double sec = elapsed.count() * 1e-9;
-    if (sec >= SECONDS - 5) {
+    if (sec >= SECONDS - 15) {
         string path_output =
                 R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" + to_string(testNo) +
                 ".out";
@@ -1538,7 +1536,7 @@ void solveTestcase() {
             //cout << "!!\n";
             improveFeedbackVertexSet();
         }
-        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         //cout << '(' << currTime - currentTime << '\n';
         if (/*(improved == 1 && currTime - currentTime > 4.) ||*/ currTime - currentTime > 8.) {
             //cout << "boss\n";
