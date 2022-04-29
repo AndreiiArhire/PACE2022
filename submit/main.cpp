@@ -238,11 +238,9 @@ bool reduceDICLIQUE3() {
         }
         if (!okIsh) {
             continue;
-        }//cout << "ok\n";
+        }
         mergeNode(it);
         ret = true;
-        //cout << "*\n";
-        // cout << "ok?\n";
         for (auto &it2 : cl3) {
             checkTime();
             it2.clear();
@@ -382,10 +380,8 @@ bool reduceDICLIQUE2() {
             candidatesSortedSet.clear();
             continue;
         }
-        //cout << "ok\n";
         mergeNode(it);
         ret = true;
-        //cout << "*\n";
         for (auto &it2 : cl2) {
             checkTime();
             it2.clear();
@@ -512,8 +508,8 @@ bool reduceDICLIQUE1() {
 
 signed main() {
     //cin.tie();
-    for (testNo = 7; testNo <= 7; testNo += 2) {
-        //cout << (testNo + 1) / 2 << '\n';
+    for (testNo = 133; testNo <= 133; testNo += 2) {
+        cout << (testNo + 1) / 2 << '\n';
         solveTestcase();
     }
     return 0;
@@ -1158,7 +1154,7 @@ void readData() {
     path_input += to_string(testNo);
     ifstream in(path_input);
     int t;
-    while (getline(cin, s)) {
+    while (getline(in, s)) {
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -1177,7 +1173,7 @@ void readData() {
     }
     initializeSets();
     for (int j = 1; j <= n; ++j) {
-        getline(cin, s);
+        getline(in, s);
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -1288,6 +1284,14 @@ void improveFeedbackVertexSet() {
              break;
          }
         */
+        auto end = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin_);
+        double sec = elapsed.count() * 1e-9;
+        if (sec >= SECONDS - 20) {
+            if (lastFeedbackVertexSet.size() < bestFeedbackVertexSet.size()) {
+                bestFeedbackVertexSet = lastFeedbackVertexSet;
+            }
+        }
         checkTime();
         int node = localDFVS.back();
         localDFVS.pop_back();
@@ -1518,7 +1522,7 @@ void solveTestcase() {
         //cout << "??\n";
         //cout << getElapsed() << '\n';
         improveFeedbackVertexSet();
-        //cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
     }
     firstTime = 1;
     //cout << "()" << getElapsed() << '\n';
@@ -1536,7 +1540,7 @@ void solveTestcase() {
             //cout << "!!\n";
             improveFeedbackVertexSet();
         }
-        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
         //cout << '(' << currTime - currentTime << '\n';
         if (/*(improved == 1 && currTime - currentTime > 4.) ||*/ currTime - currentTime > 8.) {
             //cout << "boss\n";
