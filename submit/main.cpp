@@ -40,12 +40,11 @@ auto cmp = [](pair<long long, int> a, pair<long long, int> b) {
 };
 set<pair<long long, int>, decltype(cmp)> availableNodes(cmp);
 
-
 void doBasicReductions();
 
 void loop();
 
-void findDFVS();
+void findDFVS(int tip);
 
 void readData();
 
@@ -238,11 +237,9 @@ bool reduceDICLIQUE3() {
         }
         if (!okIsh) {
             continue;
-        }//cout << "ok\n";
+        }
         mergeNode(it);
         ret = true;
-        //cout << "*\n";
-        // cout << "ok?\n";
         for (auto &it2 : cl3) {
             checkTime();
             it2.clear();
@@ -252,6 +249,175 @@ bool reduceDICLIQUE3() {
     return ret;
 }
 
+unordered_set<int> set1;
+
+bool reduceDICLIQUE22() {
+    bool ret = false;
+    ll = candidatesNodes;
+    for (auto it : ll) {
+        checkTime();
+        if (!availableNode[it]) {
+            continue;
+        }
+        if (edges.count(make_pair(it, it))) {
+            doBasicReductions();
+            continue;
+        }
+        if (degreeDouble[it].size() > 50 || inDegreeSimple[it].size() > 50 || outDegreeSimple[it].size() > 50) {
+            continue;
+        }
+        bool doubleOK = true;
+        for (auto it2 : degreeDouble[it]) {
+            for (auto it3 : degreeDouble[it]) {
+                if (it2 == it3) {
+                    continue;
+                }
+                if (!edges.count(make_pair(it2, it3)) || !edges.count(make_pair(it3, it2))) {
+                    doubleOK = false;
+                    break;
+                }
+            }
+            if (!doubleOK) {
+                break;
+            }
+        }
+        if (!doubleOK) {
+            continue;
+        }
+        for (auto it2 : inDegreeSimple[it]) {
+            bool isCliqueOne = true;
+            for (auto it3 : degreeDouble[it]) {
+                if (!edges.count(make_pair(it2, it3)) || !edges.count(make_pair(it3, it2))) {
+                    isCliqueOne = false;
+                    break;
+                }
+            }
+            if (!isCliqueOne) {
+                cl2[1].insert(it2);
+            } else {
+                set1.insert(it2);
+            }
+        }
+        for (auto it2 : outDegreeSimple[it]) {
+            bool isCliqueOne = true;
+            for (auto it3 : degreeDouble[it]) {
+                if (!edges.count(make_pair(it2, it3)) || !edges.count(make_pair(it3, it2))) {
+                    isCliqueOne = false;
+                    break;
+                }
+            }
+            if (!isCliqueOne) {
+                cl2[1].insert(it2);
+            } else {
+                set1.insert(it2);
+            }
+        }
+        bool simpleOK = true;
+        for (auto it2 : cl2[1]) {
+            for (auto it3 : cl2[1]) {
+                if (!edges.count(make_pair(it2, it3)) || !edges.count(make_pair(it3, it2))) {
+                    simpleOK = false;
+                    continue;
+                }
+            }
+            if (!simpleOK) {
+                break;
+            }
+        }
+        if (!simpleOK) {
+            set1.clear();
+            cl2[1].clear();
+            continue;
+        }
+        bool change = true, diClique = true;
+        while (change) {
+            change = false;
+            vector<int> toBeErased;
+            for (auto it2 : set1) {
+                bool ok[2] = {true, true};
+                for (int i = 0; i < 2; ++i) {
+                    for (auto it3 : cl2[i]) {
+                        if (!edges.count(make_pair(it2, it3)) || !edges.count(make_pair(it3, it2))) {
+                            ok[i] = false;
+                            break;
+                        }
+                    }
+                    if (!ok[i]) {
+                        break;
+                    }
+                }
+                if (ok[0] && ok[1]) {
+                    continue;
+                }
+                if (!ok[0] && !ok[1]) {
+                    diClique = false;
+                    break;
+                }
+                change = true;
+                ok[0] ? cl2[0].insert(it2) : cl2[1].insert(it2);
+                toBeErased.emplace_back(it2);
+            }
+            while (!toBeErased.empty()) {
+                set1.erase(toBeErased.back());
+                toBeErased.pop_back();
+            }
+        }
+        cl2[0].clear();
+        cl2[1].clear();
+        if (!diClique) {
+            set1.clear();
+            continue;
+        }
+        if (set1.empty()) {
+            mergeNode(it);
+            ret = true;
+            continue;
+        } else {
+            continue;
+        }
+        vector<pair<int, int>> nodes;
+        for (auto it2 : set1) {
+            int counter = 0;
+            for (auto it3 : set1) {
+                if (edges.count(make_pair(it2, it3)) && edges.count(make_pair(it3, it2))) {
+                    ++counter;
+                }
+            }
+            nodes.emplace_back(it2, counter);
+        }
+        sort(nodes.begin(), nodes.end(),
+             [](const pair<int, int> &i, const pair<int, int> &j) { return i.second < j.second; });
+        for (auto it2 : set1) {
+            if (it2 == nodes[0].first ||
+                (edges.count(make_pair(nodes[0].first, it2)) && edges.count(make_pair(it2, nodes[0].first)))) {
+                cl2[0].insert(it2);
+            } else {
+                cl2[1].insert(it2);
+            }
+        }
+        set1.clear();
+        for (int i = 0; i < 2 && diClique; ++i) {
+            for (auto it2 : cl2[i]) {
+                for (auto it3 : cl2[i]) {
+                    if (!edges.count(make_pair(it2, it3)) || !edges.count(make_pair(it3, it2))) {
+                        diClique = false;
+                    }
+                }
+                if (!diClique) {
+                    break;
+                }
+            }
+        }
+        cl2[0].clear();
+        cl2[1].clear();
+        nodes.clear();
+        if (diClique) {
+            mergeNode(it);
+        }
+    }
+
+    return ret;
+}
 
 bool reduceDICLIQUE2() {
     bool ret = false;
@@ -382,10 +548,8 @@ bool reduceDICLIQUE2() {
             candidatesSortedSet.clear();
             continue;
         }
-        //cout << "ok\n";
         mergeNode(it);
         ret = true;
-        //cout << "*\n";
         for (auto &it2 : cl2) {
             checkTime();
             it2.clear();
@@ -411,6 +575,10 @@ bool reduceDICLIQUE1() {
             continue;
         }
         if (edges.count(make_pair(it, it))) {
+            doBasicReductions();
+            continue;
+        }
+        if (degreeDouble.size() > 50) {
             continue;
         }
         bool doubleOK = true;
@@ -433,8 +601,13 @@ bool reduceDICLIQUE1() {
         if (!doubleOK) {
             continue;
         }
-        bool inOK = false;
-        inOK = true;
+        if (inDegreeSimple[it].empty() || outDegreeSimple[it].empty()) {
+            mergeNode(it);
+            ret = true;
+            continue;
+        }
+        continue;
+        bool inOK = true;
         for (auto it1 : inDegreeSimple[it]) {
             checkTime();
             for (auto it2 : inDegreeSimple[it]) {
@@ -448,7 +621,6 @@ bool reduceDICLIQUE1() {
                 break;
             }
         }
-
         if (inOK) {
             for (auto it1 : inDegreeSimple[it]) {
                 checkTime();
@@ -469,7 +641,6 @@ bool reduceDICLIQUE1() {
             ret = true;
             continue;
         }
-        //
         bool outOK = false;
         outOK = true;
         for (auto it1 : outDegreeSimple[it]) {
@@ -512,8 +683,8 @@ bool reduceDICLIQUE1() {
 
 signed main() {
     //cin.tie();
-    for (testNo = 7; testNo <= 7; testNo += 2) {
-        //cout << (testNo + 1) / 2 << '\n';
+    for (testNo = 161; testNo <= 161; testNo += 2) {
+        //cout << (testNo + 1) / 2 << ' ';
         solveTestcase();
     }
     return 0;
@@ -901,21 +1072,31 @@ bool reduceCORE() {
             visitedCORE[node] = true;
             continue;
         }
+        bool stop = false;
         for (auto it : degreeDouble[node]) {
             checkTime();
+            if (visitedCORE[it]) {
+                stop = true;
+                break;
+            }
             cliqueCORE.insert(it);
+        }
+        if (stop) {
+            cliqueCORE.clear();
+            continue;
         }
         bool isCore = true;
         if (cliqueCORE.empty()) {
             isCore = false;
         }
+        cliqueCORE.insert(node);
         for (auto it : cliqueCORE) {
             checkTime();
             int sz = 1;
             if (isCore) {
                 for (auto it3 : degreeDouble[it]) {
                     checkTime();
-                    if (it != it3 && cliqueCORE.count(it3)) {
+                    if (cliqueCORE.count(it3)) {
                         ++sz;
                     }
                 }
@@ -925,6 +1106,7 @@ bool reduceCORE() {
             }
             visitedCORE[it] = true;
         }
+        visitedCORE[node] = true;
         if (isCore) {
             for (auto it : cliqueCORE) {
                 checkTime();
@@ -1096,28 +1278,33 @@ void loopPrim() {
 
 void loop() {
     bool change = true;
-    char count = 0;
+    int count = 0;
     while (change && count++ < (!firstTime ? 3 : 10)) {
         checkTime();
         change = false;
         change |= reduceSCC();
         doBasicReductions();
-        change |= reduceDOME();
-        doBasicReductions();
         change |= reduceCORE();
         doBasicReductions();
+        change |= reduceDOME();
+        doBasicReductions();
+
+        /*
         if (firstTime) {
+            change |= reduceDICLIQUE1();
+            doBasicReductions();
+            change |= reduceDOME();
+            doBasicReductions();
             change |= reduceDICLIQUE2();
             doBasicReductions();
             change |= reduceDICLIQUE3();
             doBasicReductions();
-            change |= reduceDICLIQUE1();
-            doBasicReductions();
         }
+        */
     }
 }
 
-void findDFVS() {
+void findDFVS(int tip) {
     checkTime();
     doBasicReductions();
     int edgesCount = edges.size();
@@ -1125,20 +1312,33 @@ void findDFVS() {
     loop();
     while (!availableNodes.empty()) {
         checkTime();
-        pair<int, long long> topNode = make_pair((*availableNodes.begin()).second, (*availableNodes.begin()).first);
-        availableNodes.erase(availableNodes.begin());
+        pair<int, long long> topNode;
+        if (tip == 1) {
+            topNode = make_pair((*availableNodes.begin()).second, (*availableNodes.begin()).first);
+            availableNodes.erase(availableNodes.begin());
+        } else {
+            auto it = availableNodes.end();
+            --it;
+            topNode = make_pair((*it).second, (*it).first);
+            availableNodes.erase(it);
+        }
         if (!availableNode[topNode.first]) {
             continue;
         }
+        if (tip == 1) {
+            eraseNode(topNode.first);
+            feedbackVertexSet.insert(topNode.first);
+        } else {
+            mergeNode(topNode.first);
+        }
         ++currentErased;
-        eraseNode(topNode.first);
         doBasicReductions();
-        if ((edges.size() * 8 < edgesCount * 7 && firstTime) ||
+        cout << edges.size() << ' ' << candidatesNodes.size() << '\n';
+        if ((edges.size() * 50 < edgesCount * 49 && firstTime) ||
             (edges.size() * 4 < edgesCount * 3 && !firstTime)) {
             loop();
             edgesCount = edges.size();
         }
-        feedbackVertexSet.insert(topNode.first);
     }
     lastFeedbackVertexSet = feedbackVertexSet;
     if (bestFeedbackVertexSet.size() > feedbackVertexSet.size()) {
@@ -1158,7 +1358,7 @@ void readData() {
     path_input += to_string(testNo);
     ifstream in(path_input);
     int t;
-    while (getline(cin, s)) {
+    while (getline(in, s)) {
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -1177,7 +1377,7 @@ void readData() {
     }
     initializeSets();
     for (int j = 1; j <= n; ++j) {
-        getline(cin, s);
+        getline(in, s);
         deque<char> input;
         for (auto it : s) {
             input.push_back(it);
@@ -1228,14 +1428,12 @@ void createInitialDFVS() {
             lastFitness[x] = getFitness(x);
         }
     }
-    //cout << "-+" << candidatesNodes.size() << '\n';
-    findDFVS();
+    findDFVS(1);
     clearSets();
     initializeSets();
 }
 
 void improveFeedbackVertexSet() {
-    //cout << "()\n";
     auto currentTime = getElapsed();
     checkTime();
     availableNode = availableNodeReduced;
@@ -1288,11 +1486,13 @@ void improveFeedbackVertexSet() {
              break;
          }
         */
+
         if (currentTime > SECONDS - 20) {
             if (lastFeedbackVertexSet.size() < bestFeedbackVertexSet.size()) {
                 bestFeedbackVertexSet = lastFeedbackVertexSet;
             }
         }
+
         checkTime();
         int node = localDFVS.back();
         localDFVS.pop_back();
@@ -1361,7 +1561,6 @@ void improveFeedbackVertexSet() {
 
 void doLocalSearch() {
     checkTime();
-    //cout << "++" << getElapsed() << '\n';
     checkTime();
     for (auto node : bestFeedbackVertexSet) {
         checkTime();
@@ -1369,8 +1568,6 @@ void doLocalSearch() {
     }
     checkTime();
     unsigned seed = customRand();
-    //cout << "()()" << edgesReduced.size() << '\n';
-    //cout << "()()" << bestFeedbackVertexSet.size() << '\n';
     fitnessType = (int) seed % 2 + 1;
 
     if (!local.empty()) {
@@ -1383,11 +1580,6 @@ void doLocalSearch() {
     if (bestFeedbackVertexSet.size() < 250 && seed % 2 == 1) {
         toBeErasedCounter = (int) local.size() * 2 / 3;
     }
-    //cout << ratioIndex << '\n';
-    //if (/*bestFeedbackVertexSet.size() < 1000 &&*/ seed % 2 == 1) {
-    //  cout << "&&\n";
-    //   toBeErasedCounter = (int) local.size() * 2 / 3;
-    //}
     while (toBeErasedCounter--) {
         checkTime();
         int node = local.back();
@@ -1396,7 +1588,6 @@ void doLocalSearch() {
         feedbackVertexSet.insert(node);
     }
     local.clear();
-    //cout << getElapsed() << '\n';
     availableNode = availableNodeReduced;
     for (auto it : candidatesNodesReduced) {
         checkTime();
@@ -1444,7 +1635,7 @@ void doLocalSearch() {
     }
     local.clear();
     localSet.clear();
-    findDFVS();
+    findDFVS(2);
     clearSets();
     initializeSets();
 }
@@ -1508,7 +1699,6 @@ void solveTestcase() {
         candidatesNodes.insert(i);
     }
     loopPrim();
-    //loop();
     candidatesNodesReduced = candidatesNodes;
     inDegreeReducedSimple = inDegreeSimple;
     degreeReducedDouble = degreeDouble;
@@ -1524,13 +1714,11 @@ void solveTestcase() {
         createInitialDFVS();
         clearSets();
         initializeSets();
-        //cout << "??\n";
-        //cout << getElapsed() << '\n';
         improveFeedbackVertexSet();
-        //cout << "!!" << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        cout << "!!" << bestFeedbackVertexSet.size() << ' ' << feedbackVertexSetReduced.size() << '\n';
     }
+
     firstTime = 1;
-    //cout << "()" << getElapsed() << '\n';
     clearSets();
     initializeSets();
 
@@ -1538,17 +1726,12 @@ void solveTestcase() {
         auto currentTime = getElapsed();
         checkTime();
         doLocalSearch();
-        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
-        //cout << "--\n";
         auto currTime = getElapsed();
         if (changed < 5) {
-            //cout << "!!\n";
             improveFeedbackVertexSet();
         }
-        //cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
-        //cout << '(' << currTime - currentTime << '\n';
-        if (/*(improved == 1 && currTime - currentTime > 4.) ||*/ currTime - currentTime > 8.) {
-            //cout << "boss\n";
+        cout << bestFeedbackVertexSet.size() + feedbackVertexSetReduced.size() << '\n';
+        if (currTime - currentTime > 8.) {
             ratioIndex = min(ratioIndex + 1, (int) ratio2.size() - 1);
         }
     }
@@ -1566,4 +1749,5 @@ void solveTestcase() {
     out << output;
     out.close();
     output.clear();
+
 }
