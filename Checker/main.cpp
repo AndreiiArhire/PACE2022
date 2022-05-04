@@ -93,21 +93,20 @@ signed main() {
     map<int, int> mp;
     inDegree.resize(1000000, set<int>());
     outDegree.resize(1000000, set<int>());
-    for (int t = 129; t <= 129; t += 2) {
+    for (int t = 71; t <= 71; t += 2) {
         bad.clear();
         cout << "test " << t << " started\n";
         string path_in =
-                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public-testcases\grader_test)" +
-                to_string(t) +
-                ".in";
-        string path_out =
-                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\adhoc-results\grader_test)" +
+                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\exact-results\grader_test)" +
                 to_string(t) +
                 ".out";
-        ifstream in2(path_in);
-        ifstream in(path_out);
+        string path_out =
+                R"(C:\Users\andre\OneDrive\Desktop\PACE2022\public_exact\grader_test)" +
+                to_string(t) +
+                ".in";
+        ifstream in2(path_out);
+        ifstream in(path_in);
         int x, y;
-
         in >> n;
         cout << "..." << n << '\n';
         for (int i = 1; i <= n; ++i) {
@@ -116,6 +115,7 @@ signed main() {
         }
         in.close();
         in2 >> n >> m;
+        cout << n << ' ' << m << '\n';
         for (int i = 1; i <= m; ++i) {
             in2 >> x >> y;
             if (used[x] || used[y]) continue;
