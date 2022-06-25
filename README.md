@@ -1,5 +1,5 @@
 # \_UAIC\_ANDREIARHIRE\_ - A Heuristic Solver for the Directed Feedback Vertex Set Problem
-This is a heuristic solver for the directed version of the feedback vertex set problem, used in the Seventh Edition of [Parameterized Algorithms and Computational Experiments](https://pacechallenge.org/). A feedback vertex set of a graph is a set of nodes with the property that every cycle contains at least one vertex from the set i.e the removal of all vertices from a feedback vertex set leads to an acyclic graph. For a brief description of the solver, we refer to the following paper ([PDF](https://andrei-arhire.web.app/assets/AFC_SOLVER.pdf)).
+This is a heuristic solver for the directed version of the feedback vertex set problem, used in the Seventh Edition of [Parameterized Algorithms and Computational Experiments](https://pacechallenge.org/). A feedback vertex set of a graph is a set of nodes with the property that every cycle contains at least one vertex from the set i.e the removal of all vertices from a feedback vertex set leads to an acyclic graph. For a brief description of the solver, we refer to the following paper ([PDF](https://andrei-arhire.web.app/assets/PACE2022.pdf)).
 
 ## Required
 C++ 11 or higher
